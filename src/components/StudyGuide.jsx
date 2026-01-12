@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react'
+import { useState, useContext, useEffect, useRef } from 'react'
 import { LanguageContext } from '../App'
 import { getTranslation } from '../translations'
 import './StudyGuide.css'
