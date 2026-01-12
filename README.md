@@ -2,6 +2,8 @@
 
 Una aplicación web interactiva y moderna diseñada para dominar el contenido del curso **INU4100 - Inglés Elemental II**. Esta herramienta actúa como un compañero de estudio inteligente, combinando teoría, práctica y simulación de examen.
 
+### 🚀 Demo en vivo: [https://ingles-study-app.vercel.app](https://ingles-study-app.vercel.app)
+
 ![Estado del Proyecto](https://img.shields.io/badge/Estado-Activo-success)
 ![Tech Stack](https://img.shields.io/badge/Stack-React_|_Vite_|_Node.js-blue)
 
