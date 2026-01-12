@@ -12,52 +12,52 @@ function StudyGuide({ onBack }) {
   const [showAudioSettings, setShowAudioSettings] = useState(false)
   const [voices, setVoices] = useState([])
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(0)
-  const [useCloudVoice, setUseCloudVoice] = useState(false) // Toggle for Cloud API
+  const [useCloudVoice, setUseCloudVoice] = useState(true) // ✅ DEFAULT: ON (Premium Voice First)
   const [cloudLoading, setCloudLoading] = useState(false)
+  
+  // 🚀 AUDIO CACHE: Store blobs in memory to make repeated clicks INSTANT
+  const audioCache = useRef({}) 
 
   // Initialize Voices Robustly (Browser Voices)
   useEffect(() => {
+    // ... (rest of voice loading logic remains same) ...
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices()
+      if (availableVoices.length === 0) { setTimeout(loadVoices, 100); return }
       
-      if (availableVoices.length === 0) {
-        setTimeout(loadVoices, 100)
-        return
-      }
-
-      // 1. FILTER: Allow English voices AND Sabina explicitly. Ban Raul/Rudolph.
       const filteredVoices = availableVoices.filter(v => {
         const name = v.name.toLowerCase()
         const isSabina = name.includes('sabina')
         const isEnglish = v.lang.startsWith('en') || name.includes('english') || v.lang.indexOf('en-') !== -1
-        
         return (isEnglish || isSabina) && !name.includes('raul') && !name.includes('rudolph')
       })
-      
       setVoices(filteredVoices)
       
-      // 2. AUTO-SELECT SABINA (Default Offline)
       const sabinaIndex = filteredVoices.findIndex(v => v.name.includes('Sabina'))
-      if (sabinaIndex !== -1) {
-         setSelectedVoiceIndex(sabinaIndex)
-      } else if (selectedVoiceIndex === 0 && filteredVoices.length > 0) {
+      if (sabinaIndex !== -1) setSelectedVoiceIndex(sabinaIndex)
+      else if (selectedVoiceIndex === 0 && filteredVoices.length > 0) {
          const bestIndex = filteredVoices.findIndex(v => v.name.includes('Google US English') || v.name.includes('Natural'))
          if (bestIndex !== -1) setSelectedVoiceIndex(bestIndex)
       }
     }
-
     loadVoices()
     window.speechSynthesis.onvoiceschanged = loadVoices
     return () => { window.speechSynthesis.onvoiceschanged = null }
   }, [])
 
   const playAudio = async (text) => {
-    // CLOUD VOICE STRATEGY
+    // CLOUD VOICE STRATEGY (Premium)
     if (useCloudVoice) {
+      
+      // ⚡ CACHE CHECK: If we have it, play instantly!
+      if (audioCache.current[text]) {
+        const audio = new Audio(audioCache.current[text])
+        audio.play()
+        return
+      }
+
       setCloudLoading(true)
       try {
-        // Determine URL: In production (Vercel) use relative path /api/synthesize
-        // In local dev, use the dedicated node server port 3001
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
           ? 'http://localhost:3001/api/synthesize' 
           : '/api/synthesize';
@@ -65,13 +65,17 @@ function StudyGuide({ onBack }) {
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, gender: 'male' }) // Default to Male voice
+          body: JSON.stringify({ text, gender: 'male' }) 
         })
 
         if (!response.ok) throw new Error('Cloud TTS failed')
 
         const blob = await response.blob()
         const audioUrl = URL.createObjectURL(blob)
+        
+        // 💾 SAVE TO CACHE
+        audioCache.current[text] = audioUrl
+
         const audio = new Audio(audioUrl)
         audio.play()
       } catch (err) {
@@ -79,10 +83,14 @@ function StudyGuide({ onBack }) {
         const isLocal = window.location.hostname === 'localhost';
         const msg = isLocal 
           ? "⚠️ Error Local: Asegúrate de correr 'node server.js'" 
-          : "⚠️ Error Nube: Verifica que las credenciales GOOGLE_CREDENTIALS estén configuradas en Vercel.";
+          : "⚠️ Error Nube: Configuración de credenciales incorrecta.";
         
-        alert(msg)
-        setUseCloudVoice(false) // Fallback to local
+        // Silent fallback to local voice if cloud fails
+        console.warn(msg + " Falling back to local voice.")
+        setUseCloudVoice(false) 
+        // Retry locally immediately
+        const u = new SpeechSynthesisUtterance(text)
+        u.item_lang = 'en-US'; window.speechSynthesis.speak(u)
       } finally {
         setCloudLoading(false)
       }
