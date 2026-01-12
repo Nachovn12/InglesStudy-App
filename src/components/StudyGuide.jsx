@@ -56,7 +56,13 @@ function StudyGuide({ onBack }) {
     if (useCloudVoice) {
       setCloudLoading(true)
       try {
-        const response = await fetch('http://localhost:3001/api/synthesize', {
+        // Determine URL: In production (Vercel) use relative path /api/synthesize
+        // In local dev, use the dedicated node server port 3001
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:3001/api/synthesize' 
+          : '/api/synthesize';
+
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, gender: 'male' }) // Default to Male voice
@@ -70,7 +76,12 @@ function StudyGuide({ onBack }) {
         audio.play()
       } catch (err) {
         console.error("Cloud TTS Error:", err)
-        alert("⚠️ Error de Conexión:\n1. Asegúrate de correr 'node server.js' en otra terminal.\n2. Verifica que tengas tu archivo JSON de google-cloud en la carpeta raiz.")
+        const isLocal = window.location.hostname === 'localhost';
+        const msg = isLocal 
+          ? "⚠️ Error Local: Asegúrate de correr 'node server.js'" 
+          : "⚠️ Error Nube: Verifica que las credenciales GOOGLE_CREDENTIALS estén configuradas en Vercel.";
+        
+        alert(msg)
         setUseCloudVoice(false) // Fallback to local
       } finally {
         setCloudLoading(false)
@@ -524,11 +535,26 @@ function StudyGuide({ onBack }) {
                 window.speechSynthesis.speak(u)
               }}
               className="voice-select"
+              disabled={useCloudVoice} // Disable selector if cloud is on
+              style={{ opacity: useCloudVoice ? 0.5 : 1 }}
             >
               {voices.map((voice, idx) => (
                 <option key={idx} value={idx}>{voice.name}</option>
               ))}
             </select>
+            
+            <div className="premium-voice-toggle" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'rgba(66, 133, 244, 0.1)', borderRadius: '8px', border: '1px solid rgba(66, 133, 244, 0.3)' }}>
+              <input 
+                type="checkbox" 
+                id="cloudToggle"
+                checked={useCloudVoice} 
+                onChange={() => setUseCloudVoice(!useCloudVoice)}
+                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              />
+              <label htmlFor="cloudToggle" style={{ cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', color: '#4285f4', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                {cloudLoading ? '⏳ Conectando...' : '☁️ Usar Voz Premium (Google Neural)'}
+              </label>
+            </div>
           </div>
         )}
       </div>
