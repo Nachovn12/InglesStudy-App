@@ -17,10 +17,14 @@ function SpeakingSimulator({ onProgress, onBack }) {
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [recognition, setRecognition] = useState(null)
+  
+  // NEW: ANALYSIS STATE
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [feedback, setFeedback] = useState(null) // { score: number, message: string, type: 'success' | 'warning' | 'error' }
 
   useEffect(() => {
     // Initialize Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.SpeechRecognition
     if (SpeechRecognition) {
       const recog = new SpeechRecognition()
       recog.continuous = true
@@ -41,6 +45,10 @@ function SpeakingSimulator({ onProgress, onBack }) {
 
       recog.onend = () => {
         setIsListening(false)
+        // Trigger analysis if there is content
+        if (transcript && transcript.length > 5) {
+            handleStopAndAnalyze(transcript)
+        }
       }
 
       recog.onerror = (event) => {
@@ -50,23 +58,130 @@ function SpeakingSimulator({ onProgress, onBack }) {
 
       setRecognition(recog)
     }
-  }, [])
+  }, [transcript]) // Added transcript dependency to ensure we capture latest state
+
+  const handleStopAndAnalyze = (text) => {
+      setIsAnalyzing(true)
+      
+      // Simulate API delay
+      setTimeout(() => {
+          let score = 0;
+          let message = "";
+          let type = "warning";
+
+          // Simple heuristic analysis based on length (since we don't have real AI backend)
+          const length = text.length;
+          
+          if (length < 30) {
+              score = (Math.random() * (2.5 - 1.0) + 1.0).toFixed(1);
+              message = language === 'es' 
+                  ? "❌ Respuesta muy corta. El profesor te pedirá más detalles. Intenta usar 'because' para explicar."
+                  : "❌ Too short. The professor will ask for more details. Try using 'because' to explain.";
+              type = "error";
+          } else if (length < 80) {
+              score = (Math.random() * (4.0 - 2.6) + 2.6).toFixed(1);
+              message = language === 'es' 
+                  ? "⚠️ Buen comienzo, pero falta profundidad. Intenta agregar una frase más sobre cómo te sentiste."
+                  : "⚠️ Good start, but needs more depth. Try adding one more sentence about how you felt.";
+              type = "warning";
+          } else {
+              score = (Math.random() * (5.0 - 4.1) + 4.1).toFixed(1);
+              message = language === 'es' 
+                  ? "✅ ¡Excelente respuesta! Buena longitud y fluidez. Mantén este nivel de detalle."
+                  : "✅ Excellent answer! Good length and fluency. Keep up this level of detail.";
+              type = "success";
+          }
+
+          setFeedback({ score, message, type });
+          setIsAnalyzing(false);
+      }, 2000);
+  }
 
   const toggleListening = () => {
     if (!recognition) {
-      alert("Tu navegador no soporta reconocimiento de voz. Usa Google Chrome.")
+      alert(language === 'es' ? "Tu navegador no soporta reconocimiento de voz. Usa Chrome." : "Browser usually doesn't support speech recognition. Use Chrome.")
       return
     }
 
     if (isListening) {
       recognition.stop()
       setIsListening(false)
+      // Analysis is triggered by onend
     } else {
       setTranscript('')
+      setFeedback(null) // Clear previous feedback
       recognition.start()
       setIsListening(true)
     }
   }
+
+  // ... (Questions array remains unchanged) ...
+  // ... (categories definitions) ...
+  // ... (return statement starts) ...
+
+  // RENDER SECTION - UPDATED VOICE RECORDER
+        /* VOICE RECOGNITION SECTION - REDESIGNED */
+        <div className={`voice-recorder-section ${isListening ? 'active' : ''}`}>
+          <div className="recorder-status">
+            {isListening ? (
+              <span className="status-badge live">🔴 {language === 'es' ? 'Grabando...' : 'Listening...'}</span>
+            ) : isAnalyzing ? (
+              <span className="status-badge analyzing">🧠 {language === 'es' ? 'Analizando...' : 'Analyzing...'}</span>
+            ) : (
+              <span className="status-badge ready">{language === 'es' ? 'Listo para practicar' : 'Ready to practice'}</span>
+            )}
+          </div>
+          
+          <div className="recorder-interface">
+            <div className="mic-button-wrapper">
+              <button 
+                onClick={toggleListening}
+                className={`big-mic-button ${isListening ? 'listening' : ''}`}
+                title={isListening ? 'Stop' : 'Start'}
+                disabled={isAnalyzing}
+              >
+                <span className="mic-icon">{isListening ? '⏹' : '🎙'}</span>
+              </button>
+              {isListening && (
+                <div className="pulse-ring"></div>
+              )}
+            </div>
+
+            <div className="transcript-display">
+              {transcript ? (
+                <p className="transcript-text">"{transcript}"</p>
+              ) : (
+                 <p className="transcript-placeholder">
+                   {isListening 
+                     ? (language === 'es' ? 'Te escucho...' : 'Listening...') 
+                     : (language === 'es' ? 'Presiona y responde la pregunta...' : 'Tap mic and answer...')}
+                 </p>
+              )}
+              {isListening && (
+                <div className="fake-waveform">
+                  <div className="bar"></div><div className="bar"></div><div className="bar"></div><div className="bar"></div>
+                  <div className="bar"></div><div className="bar"></div><div className="bar"></div><div className="bar"></div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* AI FEEDBACK CARD */}
+          {feedback && !isListening && !isAnalyzing && (
+              <div className={`ai-feedback-card ${feedback.type}`}>
+                  <div className="feedback-header">
+                      <div className="feedback-score">
+                          <span className="score-num">{feedback.score}</span>
+                          <span className="score-max">/ 5.0</span>
+                      </div>
+                      <div className="feedback-badge">
+                          {feedback.type === 'success' ? 'EXCELLENT' : feedback.type === 'warning' ? 'GOOD' : 'KEEP TRYING'}
+                      </div>
+                  </div>
+                  <p className="feedback-message">{feedback.message}</p>
+              </div>
+          )}
+        </div>
 
   const questions = [
     {
@@ -359,8 +474,10 @@ function SpeakingSimulator({ onProgress, onBack }) {
           <div className="recorder-status">
             {isListening ? (
               <span className="status-badge live">🔴 {language === 'es' ? 'Grabando...' : 'Listening...'}</span>
+            ) : isAnalyzing ? (
+              <span className="status-badge analyzing">🧠 {language === 'es' ? 'Analizando...' : 'Analyzing...'}</span>
             ) : (
-              <span className="status-badge ready">{language === 'es' ? 'Listo para escuchar' : 'Ready to record'}</span>
+              <span className="status-badge ready">{language === 'es' ? 'Listo para practicar' : 'Ready to practice'}</span>
             )}
           </div>
           
@@ -370,6 +487,7 @@ function SpeakingSimulator({ onProgress, onBack }) {
                 onClick={toggleListening}
                 className={`big-mic-button ${isListening ? 'listening' : ''}`}
                 title={isListening ? 'Stop' : 'Start'}
+                disabled={isAnalyzing}
               >
                 <span className="mic-icon">{isListening ? '⏹' : '🎙'}</span>
               </button>
@@ -384,8 +502,8 @@ function SpeakingSimulator({ onProgress, onBack }) {
               ) : (
                  <p className="transcript-placeholder">
                    {isListening 
-                     ? (language === 'es' ? 'Habla ahora...' : 'Speak now...') 
-                     : (language === 'es' ? 'Presiona el micrófono y responde la pregunta en voz alta...' : 'Tap the mic and answer the question out loud...')}
+                     ? (language === 'es' ? 'Te escucho...' : 'Listening...') 
+                     : (language === 'es' ? 'Presiona y responde la pregunta...' : 'Tap mic and answer...')}
                  </p>
               )}
               {isListening && (
@@ -396,6 +514,22 @@ function SpeakingSimulator({ onProgress, onBack }) {
               )}
             </div>
           </div>
+
+          {/* AI FEEDBACK CARD - DISPLAYS SIMULATED ANALYSIS */}
+          {feedback && !isListening && !isAnalyzing && (
+              <div className={`ai-feedback-card ${feedback.type}`}>
+                  <div className="feedback-header">
+                      <div className="feedback-score">
+                          <span className="score-num">{feedback.score}</span>
+                          <span className="score-max">/ 5.0</span>
+                      </div>
+                      <div className="feedback-badge">
+                          {feedback.type === 'success' ? 'EXCELLENT' : feedback.type === 'warning' ? 'GOOD' : 'KEEP TRYING'}
+                      </div>
+                  </div>
+                  <p className="feedback-message">{feedback.message}</p>
+              </div>
+          )}
         </div>
 
         {/* Comparison Section */}

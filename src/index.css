@@ -600,14 +600,24 @@ textarea {
     min-height: 44px;
   }
 
-  /* Stack elements vertically on mobile */
-  .flex {
+  /* UTILITY: Only stack items that need stacking on mobile */
+  .flex-mobile-col {
     flex-direction: column;
+  }
+
+  .flex-mobile-row {
+      flex-direction: row;
+      flex-wrap: wrap;
   }
 
   /* Full width cards on mobile */
   .card-interactive {
     width: 100%;
+  }
+  
+  /* Adjust container padding */
+  .container {
+      padding: 0 var(--spacing-md);
   }
 }
 

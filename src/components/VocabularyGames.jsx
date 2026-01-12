@@ -296,7 +296,139 @@ function VocabularyGames({ onProgress, onBack }) {
     )
   }
 
-  // ... (Existing flashcards and matching blocks are untouched) ...
+  if (gameMode === 'flashcards') {
+    const words = vocabularyData[currentCategory]
+    const currentWord = words[currentCard]
+    const categoryInfo = categories.find(c => c.id === currentCategory)
+    const progress = ((currentCard + 1) / words.length) * 100
+
+    return (
+      <div className="vocabulary-games view-container">
+        <button className="btn btn-outline back-button" onClick={backToMenu}>
+          ← {t('backToCategories')}
+        </button>
+
+        <div className="section-header">
+          <h2 className="section-title">{categoryInfo.icon} {categoryInfo.title} - {t('flashcards')}</h2>
+          <div className="score-display">
+            <span className="score-label">{language === 'es' ? 'Tarjeta' : 'Card'}:</span>
+            <span className="score-value">{currentCard + 1}/{words.length}</span>
+          </div>
+        </div>
+
+        <div className="progress-bar mb-xl">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+
+        <div className="flashcard-container">
+          <div className={`flashcard ${isFlipped ? 'flipped' : ''}`} onClick={flipCard}>
+            <div className="flashcard-front">
+              <div className="flashcard-emoji">{currentWord.emoji}</div>
+              <div className="flashcard-text">{currentWord.english}</div>
+              {currentWord.type && (
+                <div className="flashcard-badge badge badge-info">
+                  {currentWord.type}
+                </div>
+              )}
+              <div className="flashcard-hint">{t('clickToFlip')}</div>
+            </div>
+            <div className="flashcard-back">
+              <div className="flashcard-emoji">{currentWord.emoji}</div>
+              <div className="flashcard-text">{currentWord.spanish}</div>
+              <div className="flashcard-original">{currentWord.english}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flashcard-controls">
+          <button
+            className="btn btn-outline"
+            onClick={previousCard}
+            disabled={currentCard === 0}
+          >
+            ← {t('previous')}
+          </button>
+          <button className="btn btn-accent" onClick={flipCard}>
+            🔄 {t('flipCard')}
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={nextCard}
+          >
+            {currentCard < words.length - 1 ? `${t('next')} →` : `${t('finish')} ✓`}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (gameMode === 'matching') {
+    const categoryInfo = categories.find(c => c.id === currentCategory)
+    const isComplete = matchedCards.length === matchingPairs.length
+
+    return (
+      <div className="vocabulary-games view-container">
+        <button className="btn btn-outline back-button" onClick={backToMenu}>
+          ← {t('backToCategories')}
+        </button>
+
+        <div className="section-header">
+          <h2 className="section-title">{categoryInfo.icon} {categoryInfo.title} - {t('matchingGame')}</h2>
+          <div className="score-display">
+            <span className="score-label">{t('matches')}:</span>
+            <span className="score-value">{score}/6</span>
+          </div>
+        </div>
+
+        {isComplete ? (
+          <div className="completion-message card">
+            <div className="completion-icon">🎉</div>
+            <h3>{t('congratulations')}</h3>
+            <p>{t('matchedAll')}</p>
+            <div className="games-grid">
+              <div className="game-card" onClick={() => setGameMode('menu')}>
+                <div className="game-icon">🎴</div>
+                <h3>{t('flashcards')}</h3>
+                <p>Practice vocabulary with interactive cards</p>
+              </div>
+              
+              <div className="game-card" onClick={() => startMatching(currentCategory)}>
+                <div className="game-icon">🧩</div>
+                <h3>{t('matchingGame')}</h3>
+                <p>Match concepts against the clock</p>
+              </div>
+              
+              <div className="game-card" onClick={startScrambleGame}>
+                <div className="game-icon">📝</div>
+                <h3>Ordena la Frase</h3>
+                <p>Sentence Scramble (Past, Future, Perfect)</p>
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={backToMenu}>
+              {t('playAgain')}
+            </button>
+          </div>
+        ) : (
+          <div className="matching-grid">
+            {matchingPairs.map((card) => (
+              <button
+                key={card.id}
+                className={`matching-card ${
+                  selectedCards.find(c => c.id === card.id) ? 'selected' : ''
+                } ${matchedCards.includes(card.id) ? 'matched' : ''}`}
+                onClick={() => handleCardClick(card)}
+                disabled={matchedCards.includes(card.id)}
+              >
+                <span className={card.type === 'english' ? 'english-text' : 'spanish-text'}>
+                  {card.text}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   if (gameMode === 'scramble') {
     return (
