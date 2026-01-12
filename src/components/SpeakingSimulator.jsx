@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { LanguageContext } from '../App'
 import { getTranslation } from '../translations'
 import './SpeakingSimulator.css'
@@ -12,6 +12,61 @@ function SpeakingSimulator({ onProgress, onBack }) {
   const [completedQuestions, setCompletedQuestions] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [showComparison, setShowComparison] = useState(false)
+  
+  // VOICE RECOGNITION STATE
+  const [isListening, setIsListening] = useState(false)
+  const [transcript, setTranscript] = useState('')
+  const [recognition, setRecognition] = useState(null)
+
+  useEffect(() => {
+    // Initialize Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SpeechRecognition) {
+      const recog = new SpeechRecognition()
+      recog.continuous = true
+      recog.interimResults = true
+      recog.lang = 'en-US' // Always listen in English
+      
+      recog.onresult = (event) => {
+        let finalTranscript = ''
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript
+          } else {
+             finalTranscript += event.results[i][0].transcript
+          }
+        }
+        setTranscript(finalTranscript)
+      }
+
+      recog.onend = () => {
+        setIsListening(false)
+      }
+
+      recog.onerror = (event) => {
+        console.error("Speech recognition error", event.error)
+        setIsListening(false)
+      }
+
+      setRecognition(recog)
+    }
+  }, [])
+
+  const toggleListening = () => {
+    if (!recognition) {
+      alert("Tu navegador no soporta reconocimiento de voz. Usa Google Chrome.")
+      return
+    }
+
+    if (isListening) {
+      recognition.stop()
+      setIsListening(false)
+    } else {
+      setTranscript('')
+      recognition.start()
+      setIsListening(true)
+    }
+  }
 
   const questions = [
     {
@@ -295,8 +350,52 @@ function SpeakingSimulator({ onProgress, onBack }) {
             className={`btn ${completedQuestions.includes(actualIndex) ? 'btn-outline' : 'btn-primary'}`}
             onClick={handleMarkComplete}
           >
-            {completedQuestions.includes(actualIndex) ? `✓ ${t('practiced')}` : t('markAsPracticed')}
+            {completedQuestions.includes(actualIndex) ? `✅ ${t('completed')}` : `⭕ ${t('markCompleted')}`}
           </button>
+        </div>
+
+        {/* VOICE RECOGNITION SECTION - REDESIGNED */}
+        <div className={`voice-recorder-section ${isListening ? 'active' : ''}`}>
+          <div className="recorder-status">
+            {isListening ? (
+              <span className="status-badge live">🔴 {language === 'es' ? 'Grabando...' : 'Listening...'}</span>
+            ) : (
+              <span className="status-badge ready">{language === 'es' ? 'Listo para escuchar' : 'Ready to record'}</span>
+            )}
+          </div>
+          
+          <div className="recorder-interface">
+            <div className="mic-button-wrapper">
+              <button 
+                onClick={toggleListening}
+                className={`big-mic-button ${isListening ? 'listening' : ''}`}
+                title={isListening ? 'Stop' : 'Start'}
+              >
+                <span className="mic-icon">{isListening ? '⏹' : '🎙'}</span>
+              </button>
+              {isListening && (
+                <div className="pulse-ring"></div>
+              )}
+            </div>
+
+            <div className="transcript-display">
+              {transcript ? (
+                <p className="transcript-text">"{transcript}"</p>
+              ) : (
+                 <p className="transcript-placeholder">
+                   {isListening 
+                     ? (language === 'es' ? 'Habla ahora...' : 'Speak now...') 
+                     : (language === 'es' ? 'Presiona el micrófono y responde la pregunta en voz alta...' : 'Tap the mic and answer the question out loud...')}
+                 </p>
+              )}
+              {isListening && (
+                <div className="fake-waveform">
+                  <div className="bar"></div><div className="bar"></div><div className="bar"></div><div className="bar"></div>
+                  <div className="bar"></div><div className="bar"></div><div className="bar"></div><div className="bar"></div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Comparison Section */}

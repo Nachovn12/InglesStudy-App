@@ -38,6 +38,16 @@ export const translations = {
     examSchedule: "Exam Schedule",
     writtenExamDetails: "Reading, Grammar, Vocabulary & Writing (60-70 words)",
     speakingExamDetails: "23 questions about past events, comparisons & future plans",
+    writtenExamDetails: "Reading, Grammar, Vocabulary & Writing (60-70 words)",
+    speakingExamDetails: "23 questions about past events, comparisons & future plans",
+    endTermWritten: "End of Term Test Written",
+    endTermSpeaking: "End of Term Test Speaking",
+    englishProduction: "English Production Grade",
+    finalSpeaking: "Final Exam Transversal Speaking",
+    finalWritten: "Final Exam Transversal Written",
+    ea2Content: "Content: EA 2",
+    activity1: "Activity 1",
+    ea1And2: "Content: EA 1 & 2",
     weight: "Weight",
     
     // Common
@@ -96,6 +106,8 @@ export const translations = {
     practiceTip3: "Record yourself if possible to hear how you sound",
     practiceTip4: "Check the sample answer for ideas and vocabulary",
     practiceTip5: "Practice multiple times until you feel confident",
+    markCompleted: "Mark as Completed",
+    completed: "Completed",
     
     previousQuestion: "Previous Question",
     nextQuestionBtn: "Next Question",
@@ -216,6 +228,16 @@ export const translations = {
     examSchedule: "Calendario de Exámenes",
     writtenExamDetails: "Lectura, Gramática, Vocabulario y Escritura (60-70 palabras)",
     speakingExamDetails: "23 preguntas sobre eventos pasados, comparaciones y planes futuros",
+    writtenExamDetails: "Lectura, Gramática, Vocabulario y Escritura (60-70 palabras)",
+    speakingExamDetails: "23 preguntas sobre eventos pasados, comparaciones y planes futuros",
+    endTermWritten: "Prueba de Término Escrita",
+    endTermSpeaking: "Prueba de Término Oral",
+    englishProduction: "Nota de Producción de Inglés",
+    finalSpeaking: "Examen Final Transversal Oral",
+    finalWritten: "Examen Final Transversal Escrito",
+    ea2Content: "Contenido: EA 2",
+    activity1: "Actividad 1",
+    ea1And2: "Contenido: EA 1 y 2",
     weight: "Peso",
     
     // Common
@@ -274,6 +296,8 @@ export const translations = {
     practiceTip3: "Grábate si es posible para escuchar cómo suenas",
     practiceTip4: "Revisa la respuesta modelo para ideas y vocabulario",
     practiceTip5: "Practica varias veces hasta que te sientas seguro",
+    markCompleted: "Marcar como Completado",
+    completed: "Completado",
     
     previousQuestion: "Pregunta Anterior",
     nextQuestionBtn: "Siguiente Pregunta",

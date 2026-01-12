@@ -313,6 +313,7 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
       <div className="exam-info card">
         <h3>📅 {t('examSchedule')}</h3>
         <div className="exam-schedule">
+          {/* EXISTING EXAMS (DO NOT TOUCH) */}
           <div className="exam-item">
             <div className="exam-date">
               <span className="exam-day">13</span>
@@ -321,7 +322,7 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
             <div className="exam-details">
               <h4>{t('writtenExam')}</h4>
               <p>{t('writtenExamDetails')}</p>
-              <span className="exam-weight">{t('weight')}: 32%</span>
+              <span className="exam-weight">{t('weight')}: 32% (Partial)</span>
             </div>
           </div>
           
@@ -333,7 +334,68 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
             <div className="exam-details">
               <h4>{t('speakingExam')}</h4>
               <p>{t('speakingExamDetails')}</p>
-              <span className="exam-weight">{t('weight')}: 12%</span>
+              <span className="exam-weight">{t('weight')}: 12% (Partial)</span>
+            </div>
+          </div>
+
+          {/* NEW EVALUATIONS */}
+          <div className="exam-item">
+            <div className="exam-date">
+              <span className="exam-day">22</span>
+              <span className="exam-month">ENE</span>
+            </div>
+            <div className="exam-details">
+              <h4>{t('endTermWritten')}</h4>
+              <p>{t('ea2Content')}</p>
+              <span className="exam-weight">{t('weight')}: 32% (Partial)</span>
+            </div>
+          </div>
+
+          <div className="exam-item">
+            <div className="exam-date">
+              <span className="exam-day">22</span>
+              <span className="exam-month">ENE</span>
+            </div>
+            <div className="exam-details">
+              <h4>{t('endTermSpeaking')}</h4>
+              <p>{t('ea2Content')}</p>
+              <span className="exam-weight">{t('weight')}: 12% (Partial)</span>
+            </div>
+          </div>
+
+          <div className="exam-item">
+            <div className="exam-date">
+              <span className="exam-day">26</span>
+              <span className="exam-month">ENE</span>
+            </div>
+            <div className="exam-details">
+              <h4>{t('englishProduction')}</h4>
+              <p>{t('activity1')}</p>
+              <span className="exam-weight">{t('weight')}: 12% (Partial)</span>
+            </div>
+          </div>
+
+          <div className="exam-item final-exam-item" style={{background: 'rgba(99, 102, 241, 0.1)', borderLeft: '4px solid #6366f1'}}>
+            <div className="exam-date" style={{background: '#6366f1'}}>
+              <span className="exam-day">27</span>
+              <span className="exam-month">ENE</span>
+            </div>
+            <div className="exam-details">
+              <h4>{t('finalSpeaking')}</h4>
+              <p>{t('ea1And2')}</p>
+              <span className="exam-weight">{t('weight')}: 25% (of Final 40%)</span>
+            </div>
+          </div>
+
+          <div className="exam-item final-exam-item" style={{background: 'rgba(99, 102, 241, 0.1)', borderLeft: '4px solid #6366f1'}}>
+            <div className="exam-date" style={{background: '#6366f1'}}>
+              <span className="exam-day">28</span>
+              <span className="exam-month">ENE</span>
+            </div>
+            <div className="exam-details">
+              <h4>{t('finalWritten')}</h4>
+              <p>{t('ea1And2')}</p>
+              <span className="exam-weight">{t('weight')}: 75% (of Final 40%)</span>
             </div>
           </div>
         </div>

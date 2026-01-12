@@ -268,3 +268,148 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* SCRAMBLE GAME STYLES */
+.scramble-game-board {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 30px;
+  background: rgba(30, 41, 59, 0.6); /* Darker background */
+  border-radius: 24px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.hint-box {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  text-align: center;
+  font-size: 1.1rem;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.scramble-answer-area {
+  min-height: 100px;
+  background: rgba(15, 23, 42, 0.8); /* Dark answer box */
+  border: 2px dashed rgba(148, 163, 184, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 30px;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.scramble-answer-area.success {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.scramble-answer-area.error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  animation: shake 0.4s ease-in-out;
+}
+
+.placeholder-text {
+  color: #64748b; /* Visible gray text */
+  font-style: italic;
+  font-size: 1.1rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.scramble-word-pool {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+  min-height: 60px;
+}
+
+.word-chip {
+  background: white;
+  color: #1e293b;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.word-chip:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+}
+
+.word-chip:active {
+  transform: scale(0.95);
+}
+
+.word-chip-selected {
+  background: #6366f1; /* Indigo */
+  color: white;
+  border: 1px solid #4f46e5;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.scramble-controls {
+  text-align: center;
+  min-height: 60px; /* Changed from height: 60px to min-height */
+  height: auto;     /* Allow it to grow */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.btn-check {
+  font-size: 1.1rem;
+  padding: 10px 30px;
+  border-radius: 30px;
+}
+
+.success-message-box {
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  width: 100%;
+}
+
+.success-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #10b981;
+  font-weight: bold;
+  animation: popIn 0.3s ease-out;
+}
+
+.error-message {
+  color: #ef4444;
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}

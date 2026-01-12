@@ -480,6 +480,228 @@
   font-size: 0.95rem;
 }
 
+/* VOICE RECORDER PREMIUM STYLES */
+.voice-recorder-section {
+  margin: 2.5rem 0;
+  padding: 2rem;
+  padding-top: 4rem; /* ✅ MORE SPACE AT TOP for the badge */
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+}
+
+.voice-recorder-section.active {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15);
+}
+
+.recorder-status {
+  position: absolute;
+  top: 15px;
+  right: 20px; /* Better alignment */
+  z-index: 10;
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.status-badge.live {
+  background: #ef4444;
+  color: white;
+  animation: pulse-red 2s infinite;
+}
+
+.status-badge.ready {
+  background: rgba(255, 255, 255, 0.15);
+  color: #cad5e1;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.recorder-interface {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-top: 5px;
+}
+
+.mic-button-wrapper {
+  position: relative;
+  width: 80px; /* Bigger */
+  height: 80px; /* Bigger */
+  flex-shrink: 0;
+}
+
+.big-mic-button {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.8rem; /* Bigger Icon */
+  box-shadow: 0 8px 15px rgba(29, 78, 216, 0.4), inset 0 2px 4px rgba(255,255,255,0.2);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+  position: relative;
+}
+
+.big-mic-button:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.big-mic-button:active {
+  transform: scale(0.95);
+}
+
+.big-mic-button.listening {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.5);
+  transform: scale(1.05);
+}
+
+.pulse-ring {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  border: 4px solid #ef4444;
+  opacity: 0;
+  animation: ripple 1.5s infinite;
+  z-index: 1;
+}
+
+.transcript-display {
+  flex-grow: 1;
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 20px 25px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255,255,255,0.5);
+  border: 1px solid #e2e8f0;
+}
+
+/* Speech bubble triangle tail */
+.transcript-display::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #f8fafc;
+}
+
+.transcript-placeholder {
+  color: #64748b;
+  font-style: italic;
+  font-size: 1.05rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.transcript-text {
+  color: #0f172a;
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* WAVEFORM ANIMATION */
+.fake-waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 24px;
+  position: absolute;
+  bottom: 15px;
+  right: 20px;
+  opacity: 0.8;
+}
+
+.bar {
+  width: 5px;
+  background: #3b82f6;
+  border-radius: 3px;
+  animation: sound-wave 0.5s infinite ease-in-out alternate;
+}
+
+.bar:nth-child(even) { background: #93c5fd; }
+.bar:nth-child(1) { height: 10%; animation-delay: 0.1s; }
+.bar:nth-child(2) { height: 30%; animation-delay: 0.2s; }
+.bar:nth-child(3) { height: 60%; animation-delay: 0.3s; }
+.bar:nth-child(4) { height: 90%; animation-delay: 0.4s; }
+.bar:nth-child(5) { height: 50%; animation-delay: 0.5s; }
+.bar:nth-child(6) { height: 80%; animation-delay: 0.2s; }
+.bar:nth-child(7) { height: 40%; animation-delay: 0.1s; }
+.bar:nth-child(8) { height: 20%; animation-delay: 0.3s; }
+
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes pulse-red {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes sound-wave {
+  0% { height: 20%; }
+  100% { height: 100%; }
+}
+
+@media (max-width: 600px) {
+  .recorder-interface {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  .mic-button-wrapper {
+    width: 90px;
+    height: 90px;
+  }
+  .big-mic-button {
+    font-size: 3rem;
+  }
+  .transcript-display {
+    width: 100%;
+    border-radius: 20px;
+    text-align: center;
+    padding: 20px;
+  }
+  .transcript-display::before {
+    display: none; /* Hide tail on mobile */
+  }
+}
+
 /* Question Pills with Priority */
 .question-pill.pill-guaranteed {
   border-left: 4px solid var(--error);
@@ -501,6 +723,10 @@
 
   .filter-name {
     font-size: 0.85rem;
+  }
+
+  .tips-list li {
+    font-size: 0.9rem;
   }
 
   .question-header {
