@@ -21,6 +21,15 @@ function SpeakingSimulator({ onProgress, onBack }) {
   // NEW: ANALYSIS STATE
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [feedback, setFeedback] = useState(null) // { score: number, message: string, type: 'success' | 'warning' | 'error' }
+  const [showAnalyzeBtn, setShowAnalyzeBtn] = useState(false)
+
+  // KEYWORD EXTRACTION HELPER (Simulates NLP)
+  const extractKeywords = (text) => {
+    // Remove common stop words to focus on meaningful content
+    const stopWords = ['i', 'a', 'an', 'the', 'and', 'but', 'or', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'very', 'really', 'so', 'it', 'this', 'that'];
+    const words = text.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"").split(/\s+/);
+    return words.filter(w => !stopWords.includes(w) && w.length > 3);
+  }
 
   useEffect(() => {
     // Initialize Speech Recognition
@@ -45,9 +54,8 @@ function SpeakingSimulator({ onProgress, onBack }) {
 
       recog.onend = () => {
         setIsListening(false)
-        // Trigger analysis if there is content
         if (transcript && transcript.length > 5) {
-            handleStopAndAnalyze(transcript)
+            setShowAnalyzeBtn(true) // Enable manual analysis
         }
       }
 
@@ -60,41 +68,53 @@ function SpeakingSimulator({ onProgress, onBack }) {
     }
   }, [transcript]) // Added transcript dependency to ensure we capture latest state
 
-  const handleStopAndAnalyze = (text) => {
-      setIsAnalyzing(true)
+  const handleSmartAnalyze = () => {
+      if (!transcript) return;
       
-      // Simulate API delay
+      setIsAnalyzing(true);
+      setShowAnalyzeBtn(false);
+
+      // GET KEYWORDS FROM GOOD ANSWER
+      const currentQ = questions.find(q => q.id === (filteredQuestions[currentQuestion]?.id || 1)); // Fallback safety
+      const targetKeywords = extractKeywords(currentQ.goodAnswer);
+      const userWords = transcript.toLowerCase();
+      
+      // Calculate Matches
+      const matches = targetKeywords.filter(kw => userWords.includes(kw));
+      const matchPercentage = matches.length / targetKeywords.length;
+
+      // Simulate Processing Delay
       setTimeout(() => {
           let score = 0;
           let message = "";
           let type = "warning";
 
-          // Simple heuristic analysis based on length (since we don't have real AI backend)
-          const length = text.length;
-          
-          if (length < 30) {
-              score = (Math.random() * (2.5 - 1.0) + 1.0).toFixed(1);
-              message = language === 'es' 
-                  ? "❌ Respuesta muy corta. El profesor te pedirá más detalles. Intenta usar 'because' para explicar."
-                  : "❌ Too short. The professor will ask for more details. Try using 'because' to explain.";
-              type = "error";
-          } else if (length < 80) {
-              score = (Math.random() * (4.0 - 2.6) + 2.6).toFixed(1);
-              message = language === 'es' 
-                  ? "⚠️ Buen comienzo, pero falta profundidad. Intenta agregar una frase más sobre cómo te sentiste."
-                  : "⚠️ Good start, but needs more depth. Try adding one more sentence about how you felt.";
-              type = "warning";
+          // Intelligent Scoring Logic
+          if (matchPercentage < 0.2) {
+             score = (Math.random() * (2.5 - 1.5) + 1.5).toFixed(1);
+             type = 'error';
+             const missing = targetKeywords.slice(0, 3).join(", ");
+             message = language === 'es'
+               ? `❌ Te faltaron conceptos clave. Intenta mencionar: "${missing}". Estructura mejor tu respuesta.`
+               : `❌ Missing key concepts. Try to mention: "${missing}". Structure your answer better.`;
+          } else if (matchPercentage < 0.6) {
+             score = (Math.random() * (4.2 - 2.8) + 2.8).toFixed(1);
+             type = 'warning';
+             const missing = targetKeywords.filter(k => !userWords.includes(k)).slice(0, 2).join(", ");
+             message = language === 'es'
+               ? `⚠️ Buen intento. Para mejorar, podrías incluir palabras como: "${missing}".`
+               : `⚠️ Good attempt. To improve, try including words like: "${missing}".`;
           } else {
-              score = (Math.random() * (5.0 - 4.1) + 4.1).toFixed(1);
-              message = language === 'es' 
-                  ? "✅ ¡Excelente respuesta! Buena longitud y fluidez. Mantén este nivel de detalle."
-                  : "✅ Excellent answer! Good length and fluency. Keep up this level of detail.";
-              type = "success";
+             score = (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1);
+             type = 'success';
+             message = language === 'es'
+               ? "✅ ¡Excelente! Cubriste los puntos principales y usaste buen vocabulario."
+               : "✅ Excellent! You covered the main points and used good vocabulary.";
           }
 
           setFeedback({ score, message, type });
           setIsAnalyzing(false);
-      }, 2000);
+      }, 3000); // 3 seconds "Thinking" time
   }
 
   const toggleListening = () => {
@@ -106,10 +126,11 @@ function SpeakingSimulator({ onProgress, onBack }) {
     if (isListening) {
       recognition.stop()
       setIsListening(false)
-      // Analysis is triggered by onend
+      // Show Analyze Button handled in onend
     } else {
       setTranscript('')
       setFeedback(null) // Clear previous feedback
+      setShowAnalyzeBtn(false)
       recognition.start()
       setIsListening(true)
     }
@@ -122,11 +143,18 @@ function SpeakingSimulator({ onProgress, onBack }) {
   // RENDER SECTION - UPDATED VOICE RECORDER
         /* VOICE RECOGNITION SECTION - REDESIGNED */
         <div className={`voice-recorder-section ${isListening ? 'active' : ''}`}>
+          
+          {/* LOADING OVERLAY */}
+          {isAnalyzing && (
+            <div className="analysis-overlay">
+                <div className="spinner"></div>
+                <p>🧠 {language === 'es' ? 'Analizando pronunciación y gramática...' : 'Analyzing pronunciation & grammar...'}</p>
+            </div>
+          )}
+
           <div className="recorder-status">
             {isListening ? (
               <span className="status-badge live">🔴 {language === 'es' ? 'Grabando...' : 'Listening...'}</span>
-            ) : isAnalyzing ? (
-              <span className="status-badge analyzing">🧠 {language === 'es' ? 'Analizando...' : 'Analyzing...'}</span>
             ) : (
               <span className="status-badge ready">{language === 'es' ? 'Listo para practicar' : 'Ready to practice'}</span>
             )}
@@ -149,12 +177,20 @@ function SpeakingSimulator({ onProgress, onBack }) {
 
             <div className="transcript-display">
               {transcript ? (
-                <p className="transcript-text">"{transcript}"</p>
+                <div className="transcript-content">
+                    <p className="transcript-text">"{transcript}"</p>
+                    {/* MANUAL ANALYZE BUTTON */}
+                    {showAnalyzeBtn && !isAnalyzing && !feedback && (
+                        <button className="btn btn-primary btn-sm analyze-btn" onClick={handleSmartAnalyze}>
+                            ✨ {language === 'es' ? 'Analizar Respuesta' : 'Analyze Answer'}
+                        </button>
+                    )}
+                </div>
               ) : (
                  <p className="transcript-placeholder">
                    {isListening 
                      ? (language === 'es' ? 'Te escucho...' : 'Listening...') 
-                     : (language === 'es' ? 'Presiona y responde la pregunta...' : 'Tap mic and answer...')}
+                     : (language === 'es' ? 'Presiona el micrófono y responde...' : 'Tap mic and answer...')}
                  </p>
               )}
               {isListening && (
@@ -166,7 +202,7 @@ function SpeakingSimulator({ onProgress, onBack }) {
             </div>
           </div>
 
-          {/* AI FEEDBACK CARD */}
+          {/* AI FEEDBACK CARD - DISPLAYS SIMULATED ANALYSIS */}
           {feedback && !isListening && !isAnalyzing && (
               <div className={`ai-feedback-card ${feedback.type}`}>
                   <div className="feedback-header">
