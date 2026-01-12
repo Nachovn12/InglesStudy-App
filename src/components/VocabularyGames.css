@@ -1,0 +1,270 @@
+.vocabulary-games {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.category-card {
+  text-align: center;
+  padding: var(--spacing-xl);
+  border-width: 2px;
+  transition: all var(--transition-base);
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+}
+
+.category-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.category-card h3 {
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.5rem;
+}
+
+.category-card p {
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+.game-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.game-buttons .btn {
+  width: 100%;
+}
+
+.vocab-tips {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+}
+
+.vocab-tips h3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+.vocab-tips ul {
+  list-style: none;
+  padding: 0;
+}
+
+.vocab-tips li {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--accent);
+}
+
+.vocab-tips strong {
+  color: var(--accent);
+}
+
+/* Flashcards */
+.flashcard-container {
+  perspective: 1000px;
+  margin: var(--spacing-2xl) auto;
+  max-width: 600px;
+  height: 400px;
+}
+
+.flashcard {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+  cursor: pointer;
+}
+
+.flashcard.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 3px solid var(--primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-xl);
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+  border-color: var(--secondary);
+}
+
+.flashcard-emoji {
+  font-size: 5rem;
+  margin-bottom: var(--spacing-lg);
+}
+
+.flashcard-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  text-align: center;
+}
+
+.flashcard-original {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  margin-top: var(--spacing-md);
+}
+
+.flashcard-hint {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.flashcard-badge {
+  margin-top: var(--spacing-md);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+}
+
+.flashcard-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-2xl);
+}
+
+.flashcard-controls .btn {
+  min-width: 150px;
+}
+
+/* Matching Game */
+.matching-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.matching-card {
+  padding: var(--spacing-xl);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-sans);
+}
+
+.matching-card:hover:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.matching-card.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.matching-card.matched {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--success);
+  color: var(--success);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.english-text {
+  color: var(--primary-light);
+}
+
+.spanish-text {
+  color: var(--secondary);
+}
+
+.matching-card.selected .english-text,
+.matching-card.selected .spanish-text {
+  color: white;
+}
+
+.completion-message {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  max-width: 500px;
+  margin: var(--spacing-2xl) auto;
+}
+
+.completion-icon {
+  font-size: 5rem;
+  margin-bottom: var(--spacing-lg);
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.completion-message h3 {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.completion-message p {
+  font-size: 1.25rem;
+  margin-bottom: var(--spacing-xl);
+}
+
+.completion-message .btn {
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .flashcard-container {
+    height: 350px;
+  }
+  
+  .flashcard-text {
+    font-size: 2rem;
+  }
+  
+  .flashcard-emoji {
+    font-size: 4rem;
+  }
+  
+  .flashcard-controls {
+    flex-direction: column;
+  }
+  
+  .flashcard-controls .btn {
+    width: 100%;
+  }
+  
+  .matching-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

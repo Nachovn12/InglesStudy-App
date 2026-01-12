@@ -1,0 +1,268 @@
+/* Master Study Guide Styles */
+.study-guide {
+  padding-bottom: 80px;
+}
+
+.guide-header-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.guide-main-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Big Search & Voice Settings */
+.search-bar-container {
+  padding: var(--spacing-sm);
+  background: var(--bg-card);
+  margin-bottom: var(--spacing-lg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.search-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.master-search {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1.1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.btn-audio-settings {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  transition: transform 0.2s;
+  opacity: 0.7;
+}
+
+.btn-audio-settings:hover {
+  transform: rotate(30deg);
+  opacity: 1;
+  background: var(--bg-secondary);
+}
+
+.audio-settings-panel {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+  animation: slideDown 0.2s ease;
+}
+
+.audio-settings-panel h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.voice-select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.voice-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: var(--spacing-xs);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.master-search::placeholder {
+  color: var(--text-muted);
+}
+
+/* TABS Layout - Modern Pills */
+.guide-tabs {
+  display: flex;
+  gap: var(--spacing-md);
+  overflow-x: auto;
+  padding: var(--spacing-xs) var(--spacing-xs) var(--spacing-lg) var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.guide-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.guide-tab {
+  display: flex;
+  flex-direction: row; /* Horizontal layout */
+  align-items: center;
+  justify-content: center;
+  min-width: max-content; /* Auto width based on content */
+  padding: 10px 24px; /* Pill padding */
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 100px; /* Full rounded pill */
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  flex: 0 0 auto; /* Don't stretch */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.guide-tab:hover {
+  background: var(--bg-secondary);
+  transform: translateY(-1px);
+}
+
+.guide-tab.active {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px) scale(1.05);
+  font-weight: 700;
+}
+
+.tab-icon {
+  font-size: 1.2rem;
+  margin-bottom: 0;
+  margin-right: 8px; /* Space between icon and text */
+}
+
+.tab-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Category Sections */
+.study-section {
+  background: var(--bg-card);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.category-header {
+  background: var(--bg-secondary);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-body {
+  padding: var(--spacing-md);
+  /* GRID LAYOUT for Content */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+/* Helper Rule Box - Full Width override */
+.grammar-rule-box {
+  grid-column: 1 / -1; /* Take full width */
+  background: rgba(var(--primary-rgb), 0.05);
+  border-left: 4px solid var(--primary);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+}
+
+/* COMPACT Vocab Card */
+.vocab-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vocab-row:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.vocab-audio-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.vocab-row:hover .vocab-audio-btn {
+  background: var(--primary);
+  color: white;
+}
+
+.vocab-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.vocab-en {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.vocab-es {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.no-results {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+  font-style: italic;
+}

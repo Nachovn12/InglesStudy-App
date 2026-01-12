@@ -1,0 +1,383 @@
+import { useState, useContext } from 'react'
+import { LanguageContext } from '../App'
+import { getTranslation } from '../translations'
+import './SpeakingSimulator.css'
+
+function SpeakingSimulator({ onProgress, onBack }) {
+  const { language } = useContext(LanguageContext)
+  const t = (key) => getTranslation(language, key)
+
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [showAnswer, setShowAnswer] = useState(false)
+  const [completedQuestions, setCompletedQuestions] = useState([])
+  const [selectedCategory, setSelectedCategory] = useState('all')
+
+  const questions = [
+    {
+      id: 1,
+      category: 'simple-past',
+      priority: 'guaranteed',
+      question: "What did you do last weekend?",
+      badAnswer: "I was in my house.",
+      goodAnswer: "Last weekend, I went to Santiago with my family. We visited Fantasilandia and rode many attractions. I ate empanadas for lunch. Then, we went to the mall and bought some clothes. It was a fun weekend.",
+      sampleAnswer: "Last weekend, I went to Santiago with my family. We visited Fantasilandia and rode many attractions. I ate empanadas for lunch. Then, we went to the mall and bought some clothes. It was a fun weekend.",
+      followUpQuestions: ["Did you enjoy it?", "Who did you go with?", "What was your favorite part?", "What did you eat?"],
+      tips: [
+        language === 'es' ? "Múltiples actividades, NO solo una" : "Multiple activities, NOT just one",
+        language === 'es' ? "Usa conectores: and, then, after that" : "Use connectors: and, then, after that",
+        language === 'es' ? "Agrega complementos: with my family, for lunch" : "Add complements: with my family, for lunch"
+      ]
+    },
+    {
+      id: 2,
+      category: 'simple-past',
+      priority: 'guaranteed',
+      question: "What did you do last Christmas?",
+      badAnswer: "I stayed home.",
+      goodAnswer: "Last Christmas, I celebrated with my family at home. We cooked a big dinner with chicken and salad. I received gifts from my parents. After dinner, we watched a movie together. At midnight, we opened champagne and hugged each other. It was a beautiful night.",
+      sampleAnswer: "Last Christmas, I celebrated with my family at home. We cooked a big dinner with chicken and salad. I received gifts from my parents. After dinner, we watched a movie together. At midnight, we opened champagne and hugged each other. It was a beautiful night.",
+      followUpQuestions: ["What did you eat?", "Did you receive any gifts?", "Who did you celebrate with?", "What was the best part?"],
+      tips: [
+        language === 'es' ? "Describe TODA la celebración, no solo una cosa" : "Describe the WHOLE celebration, not just one thing",
+        language === 'es' ? "Usa: cooked, received, watched, opened" : "Use: cooked, received, watched, opened"
+      ]
+    },
+    {
+      id: 3,
+      category: 'comparatives',
+      priority: 'guaranteed',
+      question: "Compare Santiago and Valparaíso.",
+      badAnswer: "Santiago is bigger.",
+      goodAnswer: "Santiago and Valparaíso are different. Santiago is bigger and more modern than Valparaíso. It has better transportation. However, Valparaíso is more colorful and more beautiful. It's near the ocean. I prefer Santiago for living because it has more job opportunities.",
+      sampleAnswer: "Santiago and Valparaíso are different. Santiago is bigger and more modern than Valparaíso. It has better transportation. However, Valparaíso is more colorful and more beautiful. It's near the ocean. I prefer Santiago for living because it has more job opportunities.",
+      followUpQuestions: ["Which one do you prefer?", "Why do you prefer that one?", "Have you been to both cities?", "Which is better for tourists?"],
+      tips: [
+        language === 'es' ? "Compara MÚLTIPLES aspectos (tamaño, clima, actividades)" : "Compare MULTIPLE aspects (size, weather, activities)",
+        language === 'es' ? "Usa: bigger, more modern, better, more beautiful" : "Use: bigger, more modern, better, more beautiful",
+        language === 'es' ? "Termina con tu preferencia: I prefer..." : "End with your preference: I prefer..."
+      ]
+    },
+    {
+      id: 4,
+      category: 'comparatives',
+      priority: 'guaranteed',
+      question: "Compare Linux and Windows (or two operating systems).",
+      badAnswer: "Linux is better.",
+      goodAnswer: "Linux and Windows are different operating systems. Linux is faster than Windows and it's free. However, Windows is easier to use than Linux. Windows is more popular and has more programs. For programming, Linux is better. But for gaming, Windows is better. I prefer Linux because I'm a developer.",
+      sampleAnswer: "Linux and Windows are different operating systems. Linux is faster than Windows and it's free. However, Windows is easier to use than Linux. Windows is more popular and has more programs. For programming, Linux is better. But for gaming, Windows is better. I prefer Linux because I'm a developer.",
+      followUpQuestions: ["Which one do you use?", "Why do you prefer that one?", "Which is better for work?", "Which is more expensive?"],
+      tips: [
+        language === 'es' ? "Adapta la pregunta a TU carrera (informática, turismo, etc.)" : "Adapt the question to YOUR major (IT, tourism, etc.)",
+        language === 'es' ? "Compara velocidad, precio, facilidad de uso" : "Compare speed, price, ease of use"
+      ]
+    },
+    {
+      id: 5,
+      category: 'there-is-are',
+      priority: 'likely',
+      question: "Describe your room using there is/there are.",
+      badAnswer: "There is a bed.",
+      goodAnswer: "In my room, there is a big bed near the window. There are two windows with blue curtains. There is a desk with my computer. There are many books on the shelf. There is a closet for my clothes. There are some posters on the wall. It's a comfortable room.",
+      sampleAnswer: "In my room, there is a big bed near the window. There are two windows with blue curtains. There is a desk with my computer. There are many books on the shelf. There is a closet for my clothes. There are some posters on the wall. It's a comfortable room.",
+      followUpQuestions: ["What is your favorite part of your room?", "Is your room big or small?", "Do you like your room?", "What color are the walls?"],
+      tips: [
+        language === 'es' ? "Describe MÚLTIPLES cosas, no solo una" : "Describe MULTIPLE things, not just one",
+        language === 'es' ? "Usa: bed, desk, window, closet, shelf" : "Use: bed, desk, window, closet, shelf"
+      ]
+    },
+    {
+      id: 6,
+      category: 'countable-uncountable',
+      priority: 'likely',
+      question: "What do you drink or eat at breakfast?",
+      badAnswer: "I drink coffee.",
+      goodAnswer: "At breakfast, I drink a lot of coffee with milk. I usually have two cups. I eat some toast with butter and jam. I also eat a few eggs, usually two. Sometimes I drink a little orange juice. I don't eat much in the morning because I wake up late.",
+      sampleAnswer: "At breakfast, I drink a lot of coffee with milk. I usually have two cups. I eat some toast with butter and jam. I also eat a few eggs, usually two. Sometimes I drink a little orange juice. I don't eat much in the morning because I wake up late.",
+      followUpQuestions: ["Do you like coffee?", "What is your favorite breakfast?", "Do you eat a lot in the morning?", "What time do you have breakfast?"],
+      tips: [
+        language === 'es' ? "Usa cuantificadores: a lot of, some, a few, a little" : "Use quantifiers: a lot of, some, a few, a little",
+        language === 'es' ? "Menciona CUÁNTO: two cups, two eggs" : "Mention HOW MUCH: two cups, two eggs"
+      ]
+    }
+  ]
+
+  const questions = [
+    {
+      id: 1,
+      question: "What facts about the life of Marilyn Monroe or any other deceased actor do you remember?",
+      sampleAnswer: "Marilyn Monroe was born in 1926. She was a famous American actress and singer. She starred in many movies in the 1950s. She died in 1962 at the age of 36. She was one of the most popular Hollywood stars.",
+      tips: ["Use Simple Past", "Mention dates (was born, died)", "Talk about their career", "Use past verbs: was, starred, died"]
+    },
+    {
+      id: 2,
+      question: "Who is your favorite singer or band leader? Tell a few facts about his/her life as a child or teenager.",
+      sampleAnswer: "My favorite singer is Bad Bunny. He was born in Puerto Rico in 1994. When he was a teenager, he studied audiovisual communication. He loved music and started making songs in his bedroom. He became famous in 2017.",
+      tips: ["Use Simple Past", "Talk about childhood/teenage years", "Mention where they were born", "Use: was born, studied, loved, became"]
+    },
+    {
+      id: 3,
+      question: "When was the last time you watched a movie you really liked?",
+      sampleAnswer: "The last time I watched a movie I really liked was last month. I saw 'Oppenheimer' at the cinema. It was a great movie about the scientist who created the atomic bomb. I went with my friends and we had a good time.",
+      tips: ["Use Simple Past", "Mention when (last week/month)", "Say what movie", "Use: watched, saw, was, went, had"]
+    },
+    {
+      id: 4,
+      question: "Talk about a memorable event in your life. Mention five facts.",
+      sampleAnswer: "A memorable event was my high school graduation. It was in December 2023. I wore a black suit. My family came to the ceremony. We took many photos. After that, we had dinner at a restaurant. It was a very special day for me.",
+      tips: ["Choose an important event", "Use Simple Past throughout", "Give 5 specific facts", "Use time expressions: in, at, after"]
+    },
+    {
+      id: 5,
+      question: "Ask your partner about what she/he did before this test.",
+      sampleAnswer: "What did you do before this test? Did you study last night? Did you have breakfast this morning? What time did you wake up? Did you feel nervous?",
+      tips: ["Use question form: Did you...?", "Ask about recent past", "Use Simple Past in questions", "Be ready for follow-up answers"]
+    },
+    {
+      id: 6,
+      question: "Talk about five things you did last week, using past time expressions.",
+      sampleAnswer: "Last week I studied for my exams. On Monday, I went to the gym. Three days ago, I met my friends at the mall. Last Friday, I watched a movie on Netflix. Yesterday, I cooked dinner for my family.",
+      tips: ["Use time expressions: last week, yesterday, ago", "Use Simple Past verbs", "Vary your activities", "Be specific with days"]
+    },
+    {
+      id: 7,
+      question: "Do you believe in ghosts? Look at picture 1 and say where the ghosts are.",
+      sampleAnswer: "I don't believe in ghosts, but in the picture I can see some ghosts. There is a ghost behind the tree. There are two ghosts next to the house. There is one ghost in front of the door. There is a ghost under the window.",
+      tips: ["Use There is/There are", "Use prepositions: behind, next to, in front of, under", "Describe locations clearly", "Answer yes/no first"]
+    },
+    {
+      id: 8,
+      question: "Talk about five things you did last semester, using past time expressions.",
+      sampleAnswer: "Last semester I took five classes. In September, I started studying English. Two months ago, I joined a study group. Last month, I finished my math course. At the beginning of the semester, I made new friends.",
+      tips: ["Use semester-related time expressions", "Use Simple Past", "Talk about academic activities", "Use: took, started, joined, finished"]
+    },
+    {
+      id: 9,
+      question: "Describe your first school. What was there?",
+      sampleAnswer: "My first school was small but nice. There was a big playground with swings. There were ten classrooms. There was a library on the second floor. There were many trees in the garden. There was a cafeteria where we had lunch.",
+      tips: ["Use There was/There were", "Describe past (was/were)", "Mention different areas", "Use: playground, classrooms, library"]
+    },
+    {
+      id: 10,
+      question: "What did you eat at breakfast yesterday?",
+      sampleAnswer: "Yesterday I had a simple breakfast. I ate two eggs and toast. I drank a cup of coffee with milk. I also had an orange. I didn't eat much because I woke up late.",
+      tips: ["Use Simple Past: ate, drank, had", "Mention specific foods", "Use countable/uncountable correctly", "Be honest and specific"]
+    },
+    {
+      id: 11,
+      question: "What did you have for lunch yesterday?",
+      sampleAnswer: "For lunch yesterday, I had rice with chicken. I also ate a salad with tomatoes and lettuce. I drank water. For dessert, I had an apple. It was a healthy lunch.",
+      tips: ["Use Simple Past: had, ate, drank", "Describe a complete meal", "Mention drinks too", "Use food vocabulary"]
+    },
+    {
+      id: 12,
+      question: "How much coffee do you drink in a day?",
+      sampleAnswer: "I drink a lot of coffee every day. I usually have three cups of coffee. I drink one cup in the morning, one after lunch, and one in the afternoon. I don't drink coffee at night because I can't sleep.",
+      tips: ["Use quantifiers: a lot of, much", "Use present simple (habits)", "Be specific with amounts", "Explain when you drink it"]
+    },
+    {
+      id: 13,
+      question: "Do you eat a lot of sugar?",
+      sampleAnswer: "No, I don't eat much sugar. I try to eat healthy. I don't drink soda because it has a lot of sugar. Sometimes I eat a little chocolate or candy, but not every day. I prefer fruit for dessert.",
+      tips: ["Use quantifiers: much, a lot of, a little", "Use present simple", "Explain your habits", "Give examples"]
+    },
+    {
+      id: 14,
+      question: "Compare two cities in Chile in terms of population, weather, and things to do.",
+      sampleAnswer: "Santiago is bigger than Valparaíso. Santiago has more population than Valparaíso. The weather in Valparaíso is better than in Santiago because it's near the ocean. Santiago is more modern than Valparaíso. There are more things to do in Santiago, but Valparaíso is more beautiful and colorful.",
+      tips: ["Use comparatives: bigger, more, better", "Compare 3 aspects minimum", "Use: than", "Cities: Santiago, Valparaíso, Concepción"]
+    },
+    {
+      id: 15,
+      question: "Ask your partner to describe her/his eating habits.",
+      sampleAnswer: "What do you usually eat for breakfast? Do you eat a lot of vegetables? How much water do you drink every day? Do you like fast food? How many meals do you have per day?",
+      tips: ["Ask about frequency", "Use How much/How many", "Ask about preferences", "Use present simple questions"]
+    },
+    {
+      id: 16,
+      question: "What are you going to do for your next vacation?",
+      sampleAnswer: "For my next vacation, I'm going to travel to the south of Chile. I'm going to visit Puerto Montt and Chiloé. I'm going to stay there for one week. I'm going to try the local food and take many photos. I'm going to relax and enjoy nature.",
+      tips: ["Use 'going to' for future plans", "Be specific about location", "Mention activities", "Use: visit, stay, try, enjoy"]
+    },
+    {
+      id: 17,
+      question: "What's your best friend going to do next week?",
+      sampleAnswer: "My best friend is going to start a new job next week. He's going to work at a technology company. He's going to meet his new colleagues on Monday. He's also going to celebrate his birthday on Friday. He's very excited about it.",
+      tips: ["Use 'going to' for someone else's plans", "Talk about your friend", "Mention specific days", "Show you know their plans"]
+    },
+    {
+      id: 18,
+      question: "Ask your partner about her/his plans for next weekend.",
+      sampleAnswer: "What are you going to do next weekend? Are you going to stay at home or go out? Are you going to meet your friends? What time are you going to wake up? Are you going to study or relax?",
+      tips: ["Use 'going to' in questions", "Ask about weekend activities", "Use: Are you going to...?", "Ask follow-up questions"]
+    },
+    {
+      id: 19,
+      question: "What social media apps do you use?",
+      sampleAnswer: "I use several social media apps. I use Instagram every day to see photos and stories. I also use WhatsApp to chat with my friends and family. I use TikTok to watch funny videos. Sometimes I use Twitter to read news. I don't use Facebook much anymore.",
+      tips: ["Use present simple", "Mention specific apps", "Explain what you do on each", "Use: Instagram, WhatsApp, TikTok, Twitter"]
+    },
+    {
+      id: 20,
+      question: "Have you ever cried/laughed a lot during a movie? When and where?",
+      sampleAnswer: "Yes, I have cried during a movie. I cried when I watched 'Coco' last year. I was at home with my family. The ending was very emotional. I also laughed a lot when I saw 'The Hangover' at the cinema with my friends.",
+      tips: ["Use Present Perfect: Have you ever...?", "Answer with Yes, I have / No, I haven't", "Give specific example with Simple Past", "Mention when and where"]
+    },
+    {
+      id: 21,
+      question: "Have you ever been to Santiago / Valparaíso / Puerto Montt / Concepción? When?",
+      sampleAnswer: "Yes, I have been to Santiago many times. I went there last month to visit my cousin. I have also been to Valparaíso twice. The first time was in 2022. I haven't been to Puerto Montt yet, but I want to go next year.",
+      tips: ["Use Present Perfect: Have you been...?", "Answer with Yes/No", "Use Simple Past for specific times", "Use: been, went, visited"]
+    },
+    {
+      id: 22,
+      question: "Have you ever done something stupid? When? What was it?",
+      sampleAnswer: "Yes, I have done something stupid. Last year, I forgot my keys inside my car and locked the door. I had to call a locksmith. It was embarrassing and expensive. Another time, I sent a message to the wrong person. It was very awkward.",
+      tips: ["Be honest but appropriate", "Use Present Perfect + Simple Past", "Explain what happened", "Use: forgot, locked, sent, was"]
+    },
+    {
+      id: 23,
+      question: "Have you ever fallen asleep watching a movie? When and where?",
+      sampleAnswer: "Yes, I have fallen asleep watching a movie. It happened last month when I was watching a very long movie at home. I was very tired after work. I fell asleep on the couch after 30 minutes. When I woke up, the movie was finished.",
+      tips: ["Use Present Perfect + Simple Past", "Explain the situation", "Mention where (home, cinema)", "Use: fallen asleep, was watching, woke up"]
+    }
+  ]
+
+  const handleMarkComplete = () => {
+    if (!completedQuestions.includes(currentQuestion)) {
+      setCompletedQuestions([...completedQuestions, currentQuestion])
+      onProgress(2)
+    }
+  }
+
+  const nextQuestion = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1)
+      setShowAnswer(false)
+    }
+  }
+
+  const previousQuestion = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1)
+      setShowAnswer(false)
+    }
+  }
+
+  const progress = (completedQuestions.length / questions.length) * 100
+  const current = questions[currentQuestion]
+
+  return (
+    <div className="speaking-simulator view-container">
+      <button className="btn btn-outline back-button" onClick={onBack}>
+        ← {t('backToDashboard')}
+      </button>
+
+      <div className="section-header">
+        <h2 className="section-title">🗣️ {t('speakingSimulator')}</h2>
+        <div className="score-display">
+          <span className="score-label">{t('practiced')}:</span>
+          <span className="score-value">{completedQuestions.length}/{questions.length}</span>
+        </div>
+      </div>
+
+      <div className="progress-info">
+        <span>{t('question')} {currentQuestion + 1} {t('of')} {questions.length}</span>
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      <div className="speaking-card card">
+        <div className="question-number">Question #{current.id}</div>
+        
+        <h3 className="speaking-question">{current.question}</h3>
+
+        <div className="speaking-controls">
+          <button
+            className="btn btn-accent"
+            onClick={() => setShowAnswer(!showAnswer)}
+          >
+            {showAnswer ? `🙈 ${t('hideAnswer')}` : `👁️ ${t('showSampleAnswer')}`}
+          </button>
+          
+          <button
+            className={`btn ${completedQuestions.includes(currentQuestion) ? 'btn-outline' : 'btn-primary'}`}
+            onClick={handleMarkComplete}
+          >
+            {completedQuestions.includes(currentQuestion) ? `✓ ${t('practiced')}` : t('markAsPracticed')}
+          </button>
+        </div>
+
+        {showAnswer && (
+          <div className="answer-section">
+            <div className="sample-answer">
+              <h4>📝 {t('sampleAnswer')}</h4>
+              <p>{current.sampleAnswer}</p>
+            </div>
+
+            <div className="tips-section">
+              <h4>💡 {t('tips')}</h4>
+              <ul>
+                {current.tips.map((tip, index) => (
+                  <li key={index}>{tip}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        <div className="practice-tips card">
+          <h4>🎯 {t('howToPractice')}</h4>
+          <ol>
+            <li>{t('practiceTip1')}</li>
+            <li>{t('practiceTip2')}</li>
+            <li>{t('practiceTip3')}</li>
+            <li>{t('practiceTip4')}</li>
+            <li>{t('practiceTip5')}</li>
+          </ol>
+        </div>
+      </div>
+
+      <div className="navigation-buttons">
+        <button
+          className="btn btn-outline"
+          onClick={previousQuestion}
+          disabled={currentQuestion === 0}
+        >
+          ← {t('previousQuestion')}
+        </button>
+        
+        <button
+          className="btn btn-primary"
+          onClick={nextQuestion}
+          disabled={currentQuestion === questions.length - 1}
+        >
+          {t('nextQuestionBtn')} →
+        </button>
+      </div>
+
+      <div className="questions-overview card">
+        <h3>📋 {t('allQuestionsOverview')}</h3>
+        <div className="questions-grid">
+          {questions.map((q, index) => (
+            <button
+              key={q.id}
+              className={`question-pill ${currentQuestion === index ? 'active' : ''} ${
+                completedQuestions.includes(index) ? 'completed' : ''
+              }`}
+              onClick={() => {
+                setCurrentQuestion(index)
+                setShowAnswer(false)
+              }}
+            >
+              <span className="pill-number">#{q.id}</span>
+              {completedQuestions.includes(index) && <span className="pill-check">✓</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default SpeakingSimulator

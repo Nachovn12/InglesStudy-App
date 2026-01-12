@@ -1,0 +1,213 @@
+.grammar-practice {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.topic-card {
+  text-align: center;
+  padding: var(--spacing-xl);
+  border-width: 2px;
+  transition: all var(--transition-base);
+}
+
+.topic-card:hover {
+  transform: translateY(-8px) scale(1.05);
+}
+
+.topic-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+.topic-card h3 {
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.5rem;
+}
+
+.topic-card p {
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+.topic-card .btn {
+  width: 100%;
+}
+
+.grammar-tips {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+}
+
+.grammar-tips h3 {
+  margin-bottom: var(--spacing-lg);
+  font-size: 1.5rem;
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.tip-item {
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary);
+  font-size: 0.95rem;
+  transition: all var(--transition-fast);
+}
+
+.tip-item:hover {
+  transform: translateX(4px);
+  border-left-color: var(--secondary);
+}
+
+.tip-item strong {
+  color: var(--primary-light);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.progress-info {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.progress-info span {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.question-card {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-2xl);
+}
+
+.question-text {
+  font-size: 1.75rem;
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.option-button {
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-family: var(--font-sans);
+}
+
+.option-button:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.option-button:disabled {
+  cursor: not-allowed;
+}
+
+.option-button.correct {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--success);
+  color: var(--success);
+  animation: pulse 0.5s ease-in-out;
+}
+
+.option-button.incorrect {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--error);
+  color: var(--error);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.feedback {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.feedback-correct {
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid var(--success);
+}
+
+.feedback-incorrect {
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid var(--error);
+}
+
+.feedback-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.feedback-content {
+  flex: 1;
+}
+
+.feedback-content strong {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.1rem;
+}
+
+.feedback-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.next-button {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .question-text {
+    font-size: 1.25rem;
+  }
+  
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .option-button {
+    font-size: 1rem;
+  }
+}
