@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react'
+import { useState, useContext, useEffect, useRef } from 'react'
 import { LanguageContext } from '../App'
 import { getTranslation } from '../translations'
 import './SpeakingSimulator.css'
@@ -16,7 +16,7 @@ function SpeakingSimulator({ onProgress, onBack }) {
   // VOICE RECOGNITION STATE
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
-  const [recognition, setRecognition] = useState(null)
+  const recognitionRef = useRef(null) // Use ref for persistent instance
   
   // NEW: ANALYSIS STATE
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -33,7 +33,7 @@ function SpeakingSimulator({ onProgress, onBack }) {
 
   useEffect(() => {
     // Initialize Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (SpeechRecognition) {
       const recog = new SpeechRecognition()
       recog.continuous = true
@@ -41,22 +41,17 @@ function SpeakingSimulator({ onProgress, onBack }) {
       recog.lang = 'en-US' // Always listen in English
       
       recog.onresult = (event) => {
-        let finalTranscript = ''
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript
-          } else {
-             finalTranscript += event.results[i][0].transcript
-          }
-        }
-        setTranscript(finalTranscript)
+        // Robust transcript reconstruction for continuous input
+        const currentTranscript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        setTranscript(currentTranscript)
       }
 
       recog.onend = () => {
         setIsListening(false)
-        if (transcript && transcript.length > 5) {
-            setShowAnalyzeBtn(true) // Enable manual analysis
-        }
+        // We defer the 'Show Analyze' logic to the useEffect below or specific interactions
+        // to avoid stale state issues in closures
       }
 
       recog.onerror = (event) => {
@@ -64,9 +59,23 @@ function SpeakingSimulator({ onProgress, onBack }) {
         setIsListening(false)
       }
 
-      setRecognition(recog)
+      recognitionRef.current = recog
     }
-  }, [transcript]) // Added transcript dependency to ensure we capture latest state
+
+    // CLEANUP: Ensure recording stops when component unmounts
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort()
+      }
+    }
+  }, []) // Empty dependency array ensures one instance per mount
+
+  // Monitor transcript changes to show analyze button when not listening
+  useEffect(() => {
+    if (!isListening && !isAnalyzing && !feedback && transcript.length > 5) {
+        setShowAnalyzeBtn(true)
+    }
+  }, [isListening, isAnalyzing, feedback, transcript])
 
   const handleSmartAnalyze = () => {
       if (!transcript) return;
@@ -118,20 +127,19 @@ function SpeakingSimulator({ onProgress, onBack }) {
   }
 
   const toggleListening = () => {
-    if (!recognition) {
+    if (!recognitionRef.current) {
       alert(language === 'es' ? "Tu navegador no soporta reconocimiento de voz. Usa Chrome." : "Browser usually doesn't support speech recognition. Use Chrome.")
       return
     }
 
     if (isListening) {
-      recognition.stop()
+      recognitionRef.current.stop()
       setIsListening(false)
-      // Show Analyze Button handled in onend
     } else {
       setTranscript('')
       setFeedback(null) // Clear previous feedback
       setShowAnalyzeBtn(false)
-      recognition.start()
+      recognitionRef.current.start()
       setIsListening(true)
     }
   }
@@ -179,8 +187,9 @@ function SpeakingSimulator({ onProgress, onBack }) {
               {transcript ? (
                 <div className="transcript-content">
                     <p className="transcript-text">"{transcript}"</p>
-                    {/* MANUAL ANALYZE BUTTON */}
-                    {showAnalyzeBtn && !isAnalyzing && !feedback && (
+                    
+                    {/* MANUAL ANALYZE BUTTON - SIMPLIFIED LOGIC */}
+                    {!isListening && !isAnalyzing && !feedback && transcript.length > 5 && (
                         <button className="btn btn-primary btn-sm analyze-btn" onClick={handleSmartAnalyze}>
                             ✨ {language === 'es' ? 'Analizar Respuesta' : 'Analyze Answer'}
                         </button>

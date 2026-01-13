@@ -615,9 +615,14 @@ textarea {
     width: 100%;
   }
   
-  /* Adjust container padding */
+  /* Adjust container padding & Safe Areas */
   .container {
       padding: 0 var(--spacing-md);
+      padding-top: env(safe-area-inset-top, 20px); /* NOTCH PROTECTION */
+  }
+
+  body {
+      padding-top: 60px; /* Space for fixed elements on mobile */
   }
 }
 

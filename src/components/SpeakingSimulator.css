@@ -594,19 +594,27 @@
 
 /* RESPONSIVE ADJUSTMENTS FOR SPEAKING SIMULATOR */
 @media (max-width: 768px) {
+  .speaking-simulator {
+      padding-top: 30px; /* Extra space for notch */
+  }
+
   .speaking-controls {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row; /* Keep as row to save vertical space */
+    flex-wrap: wrap;
+    gap: 8px;
   }
   
   .speaking-controls button {
-    width: 100%;
+    flex: 1 1 45%; /* Two buttons per row roughly */
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    min-height: 40px; /* Smaller touch target */
   }
 
   .recorder-interface {
     flex-direction: column;
     text-align: center;
-    gap: 20px;
+    gap: 15px;
   }
 
   .mic-button-wrapper {
