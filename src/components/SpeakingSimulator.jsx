@@ -72,7 +72,7 @@ function SpeakingSimulator({ onProgress, onBack }) {
 
   // Monitor transcript changes to show analyze button when not listening
   useEffect(() => {
-    if (!isListening && !isAnalyzing && !feedback && transcript.length > 5) {
+    if (!isListening && !isAnalyzing && !feedback && transcript.length >= 2) {
         setShowAnalyzeBtn(true)
     }
   }, [isListening, isAnalyzing, feedback, transcript])
@@ -189,7 +189,7 @@ function SpeakingSimulator({ onProgress, onBack }) {
                     <p className="transcript-text">"{transcript}"</p>
                     
                     {/* MANUAL ANALYZE BUTTON - SIMPLIFIED LOGIC */}
-                    {!isListening && !isAnalyzing && !feedback && transcript.length > 5 && (
+                    {!isListening && !isAnalyzing && !feedback && transcript.length >= 2 && (
                         <button className="btn btn-primary btn-sm analyze-btn" onClick={handleSmartAnalyze}>
                             ✨ {language === 'es' ? 'Analizar Respuesta' : 'Analyze Answer'}
                         </button>
