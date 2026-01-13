@@ -23,26 +23,50 @@ function VocabularyGames({ onProgress, onBack }) {
   const [errorIndex, setErrorIndex] = useState(-1) // Index where the error starts
 
   const scrambleData = [
-    // Future (Going to)
-    { id: 1, text: "I am going to study English", words: ["I", "am", "going", "to", "study", "English"], hint: "Future Plan", translation: "Voy a estudiar inglés", rule: "Subject + am/is/are + going to + verb" },
-    { id: 2, text: "Are you going to buy a car?", words: ["Are", "you", "going", "to", "buy", "a", "car?"], hint: "Question / Future", translation: "¿Vas a comprar un auto?", rule: "Am/Is/Are + Subject + going to + verb...?" },
-    { id: 3, text: "She is not going to travel", words: ["She", "is", "not", "going", "to", "travel"], hint: "Negative / Future", translation: "Ella no va a viajar", rule: "Subject + is not + going to + verb" },
-    { id: 10, text: "It is going to rain tomorrow", words: ["It", "is", "going", "to", "rain", "tomorrow"], hint: "Prediction / Future", translation: "Va a llover mañana", rule: "Prediction based on evidence" },
-    { id: 11, text: "They are going to play soccer", words: ["They", "are", "going", "to", "play", "soccer"], hint: "Future Plan", translation: "Ellos van a jugar fútbol", rule: "Plural Subject + are + going to" },
-    
-    // Past Simple
-    { id: 4, text: "Did you go to the party?", words: ["Did", "you", "go", "to", "the", "party?"], hint: "Question / Past", translation: "¿Fuiste a la fiesta?", rule: "Did + Subject + Verb (Base Form)...?" },
-    { id: 5, text: "I bought a new phone", words: ["I", "bought", "a", "new", "phone"], hint: "Irregular Verb / Past", translation: "Compré un teléfono nuevo", rule: "Subject + Verb (Past Form - Buy/Bought)" },
-    { id: 6, text: "We didn't see the movie", words: ["We", "didn't", "see", "the", "movie"], hint: "Negative / Past", translation: "No vimos la película", rule: "Subject + didn't + Verb (Base Form)" },
-    { id: 12, text: "She wrote a letter yesterday", words: ["She", "wrote", "a", "letter", "yesterday"], hint: "Past Action", translation: "Ella escribió una carta ayer", rule: "Subject + Verb (Past Form - Write/Wrote)" },
-    { id: 13, text: "He didn't like the food", words: ["He", "didn't", "like", "the", "food"], hint: "Negative / Past", translation: "No le gustó la comida", rule: "Subject + didn't + Verb (Base Form)" },
-    
-    // Present Perfect
-    { id: 7, text: "Have you ever been to Paris?", words: ["Have", "you", "ever", "been", "to", "Paris?"], hint: "Question / Experience", translation: "¿Alguna vez has estado en París?", rule: "Have + Subject + ever + Participle...?" },
-    { id: 8, text: "I have never eaten sushi", words: ["I", "have", "never", "eaten", "sushi"], hint: "Negative / Experience", translation: "Nunca he comido sushi", rule: "Subject + have + never + Participle" },
-    { id: 9, text: "She has finished her homework", words: ["She", "has", "finished", "her", "homework"], hint: "Action Completed", translation: "Ella ha terminado su tarea", rule: "Subject + has + Participle" },
-    { id: 14, text: "I have lost my keys", words: ["I", "have", "lost", "my", "keys"], hint: "Recent Event", translation: "He perdido mis llaves", rule: "Subject + have + Participle (Lose/Lost)" },
-    { id: 15, text: "We have lived here for two years", words: ["We", "have", "lived", "here", "for", "two", "years"], hint: "Duration", translation: "Hemos vivido aquí por dos años", rule: "Subject + have + Participle + for..." }
+    // SIMPLE PAST (Guaranteed Topic)
+    { id: 1, text: "I went to Santiago last weekend", words: ["I", "went", "to", "Santiago", "last", "weekend"], hint: "Past Action", translation: "Fui a Santiago el fin de semana pasado", rule: "Subject + Verb (Past) + Time Expression" },
+    { id: 2, text: "Did you go to the party?", words: ["Did", "you", "go", "to", "the", "party?"], hint: "Question / Past", translation: "¿Fuiste a la fiesta?", rule: "Did + Subject + Verb (Base Form)...?" },
+    { id: 3, text: "She didn't watch the movie", words: ["She", "didn't", "watch", "the", "movie"], hint: "Negative / Past", translation: "Ella no vio la película", rule: "Subject + didn't + Verb (Base Form)" },
+    { id: 4, text: "We visited Fantasilandia yesterday", words: ["We", "visited", "Fantasilandia", "yesterday"], hint: "Past Activity", translation: "Visitamos Fantasilandia ayer", rule: "Subject + Verb-ed + Time Expression" },
+    { id: 5, text: "I ate empanadas for lunch", words: ["I", "ate", "empanadas", "for", "lunch"], hint: "Irregular Verb / Past", translation: "Comí empanadas en el almuerzo", rule: "Subject + Verb (Irregular Past - Eat/Ate)" },
+    { id: 6, text: "They had a great time", words: ["They", "had", "a", "great", "time"], hint: "Past Experience", translation: "Ellos la pasaron genial", rule: "Subject + had (Have/Had)" },
+    { id: 7, text: "What did you do yesterday?", words: ["What", "did", "you", "do", "yesterday?"], hint: "Question / Past", translation: "¿Qué hiciste ayer?", rule: "What + did + Subject + do...?" },
+    { id: 8, text: "I bought some clothes at the mall", words: ["I", "bought", "some", "clothes", "at", "the", "mall"], hint: "Past Shopping", translation: "Compré algo de ropa en el mall", rule: "Subject + bought (Buy/Bought)" },
+
+    // COMPARATIVES (Guaranteed Topic)
+    { id: 9, text: "Santiago is bigger than Valparaíso", words: ["Santiago", "is", "bigger", "than", "Valparaíso"], hint: "Comparative / Cities", translation: "Santiago es más grande que Valparaíso", rule: "Subject + is + Adjective-er + than" },
+    { id: 10, text: "Linux is faster than Windows", words: ["Linux", "is", "faster", "than", "Windows"], hint: "Comparative / Technology", translation: "Linux es más rápido que Windows", rule: "Subject + is + Adjective-er + than" },
+    { id: 11, text: "Python is easier than JavaScript", words: ["Python", "is", "easier", "than", "JavaScript"], hint: "Comparative / Programming", translation: "Python es más fácil que JavaScript", rule: "Subject + is + Adjective-er + than" },
+    { id: 12, text: "Valparaíso is more colorful than Santiago", words: ["Valparaíso", "is", "more", "colorful", "than", "Santiago"], hint: "Comparative / Long Adjective", translation: "Valparaíso es más colorido que Santiago", rule: "Subject + is + more + Adjective + than" },
+    { id: 13, text: "Windows is more popular than Linux", words: ["Windows", "is", "more", "popular", "than", "Linux"], hint: "Comparative / Popularity", translation: "Windows es más popular que Linux", rule: "Subject + is + more + Adjective + than" },
+    { id: 14, text: "The beach is better than the mountains", words: ["The", "beach", "is", "better", "than", "the", "mountains"], hint: "Irregular Comparative", translation: "La playa es mejor que las montañas", rule: "Subject + is + better + than (Good/Better)" },
+    { id: 15, text: "This phone is worse than my old one", words: ["This", "phone", "is", "worse", "than", "my", "old", "one"], hint: "Irregular Comparative", translation: "Este teléfono es peor que mi viejo", rule: "Subject + is + worse + than (Bad/Worse)" },
+
+    // THERE IS / THERE ARE (Likely Topic)
+    { id: 16, text: "There is a bed in my room", words: ["There", "is", "a", "bed", "in", "my", "room"], hint: "Singular / Location", translation: "Hay una cama en mi habitación", rule: "There is + Singular Noun" },
+    { id: 17, text: "There are two windows in the kitchen", words: ["There", "are", "two", "windows", "in", "the", "kitchen"], hint: "Plural / Location", translation: "Hay dos ventanas en la cocina", rule: "There are + Plural Noun" },
+    { id: 18, text: "There is a computer on the desk", words: ["There", "is", "a", "computer", "on", "the", "desk"], hint: "Singular / Object", translation: "Hay un computador en el escritorio", rule: "There is + Singular Noun + Preposition" },
+    { id: 19, text: "There are many books on the shelf", words: ["There", "are", "many", "books", "on", "the", "shelf"], hint: "Plural / Quantity", translation: "Hay muchos libros en el estante", rule: "There are + many + Plural Noun" },
+    { id: 20, text: "Is there a closet in your room?", words: ["Is", "there", "a", "closet", "in", "your", "room?"], hint: "Question / Singular", translation: "¿Hay un clóset en tu habitación?", rule: "Is there + Singular Noun...?" },
+
+    // COUNTABLE / UNCOUNTABLE (Likely Topic)
+    { id: 21, text: "I drink a lot of coffee", words: ["I", "drink", "a", "lot", "of", "coffee"], hint: "Uncountable / Quantity", translation: "Bebo mucho café", rule: "a lot of + Uncountable Noun" },
+    { id: 22, text: "I eat a few eggs for breakfast", words: ["I", "eat", "a", "few", "eggs", "for", "breakfast"], hint: "Countable / Small Quantity", translation: "Como algunos huevos en el desayuno", rule: "a few + Countable Plural" },
+    { id: 23, text: "She drinks a little orange juice", words: ["She", "drinks", "a", "little", "orange", "juice"], hint: "Uncountable / Small Quantity", translation: "Ella bebe un poco de jugo de naranja", rule: "a little + Uncountable Noun" },
+    { id: 24, text: "There is some milk in the fridge", words: ["There", "is", "some", "milk", "in", "the", "fridge"], hint: "Uncountable / Existence", translation: "Hay algo de leche en el refrigerador", rule: "some + Uncountable Noun" },
+    { id: 25, text: "I don't drink much soda", words: ["I", "don't", "drink", "much", "soda"], hint: "Negative / Uncountable", translation: "No bebo mucha bebida", rule: "much + Uncountable Noun (Negative)" },
+    { id: 26, text: "How much water do you drink?", words: ["How", "much", "water", "do", "you", "drink?"], hint: "Question / Uncountable", translation: "¿Cuánta agua bebes?", rule: "How much + Uncountable Noun...?" },
+    { id: 27, text: "How many glasses do you have?", words: ["How", "many", "glasses", "do", "you", "have?"], hint: "Question / Countable", translation: "¿Cuántos vasos tienes?", rule: "How many + Countable Plural...?" },
+
+    // FUTURE (Going to)
+    { id: 28, text: "I am going to study English", words: ["I", "am", "going", "to", "study", "English"], hint: "Future Plan", translation: "Voy a estudiar inglés", rule: "Subject + am/is/are + going to + verb" },
+    { id: 29, text: "Are you going to travel next month?", words: ["Are", "you", "going", "to", "travel", "next", "month?"], hint: "Question / Future", translation: "¿Vas a viajar el próximo mes?", rule: "Am/Is/Are + Subject + going to...?" },
+    { id: 30, text: "She is not going to buy a car", words: ["She", "is", "not", "going", "to", "buy", "a", "car"], hint: "Negative / Future", translation: "Ella no va a comprar un auto", rule: "Subject + is not + going to + verb" },
+
+    // PRESENT PERFECT
+    { id: 31, text: "I have visited La Serena twice", words: ["I", "have", "visited", "La", "Serena", "twice"], hint: "Experience / Frequency", translation: "He visitado La Serena dos veces", rule: "Subject + have + Participle + Frequency" },
+    { id: 32, text: "Have you ever eaten sushi?", words: ["Have", "you", "ever", "eaten", "sushi?"], hint: "Question / Experience", translation: "¿Alguna vez has comido sushi?", rule: "Have + Subject + ever + Participle...?" },
+    { id: 33, text: "She has never been to Paris", words: ["She", "has", "never", "been", "to", "Paris"], hint: "Negative / Experience", translation: "Ella nunca ha estado en París", rule: "Subject + has + never + Participle" }
   ]
 
   const vocabularyData = {
