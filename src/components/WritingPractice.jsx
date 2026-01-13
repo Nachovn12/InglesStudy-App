@@ -176,6 +176,28 @@ function WritingPractice({ onProgress, onBack }) {
     setIsAnalyzing(true)
     const textLower = writingText.toLowerCase()
 
+    // CHILEAN CONTEXT: Whitelist of Chilean place names and proper nouns
+    const chileanPlaces = [
+      'santiago', 'valparaíso', 'valparaiso', 'viña del mar', 'vina del mar', 
+      'concepción', 'concepcion', 'la serena', 'antofagasta', 'temuco', 
+      'rancagua', 'talca', 'arica', 'iquique', 'puerto montt', 'puerto varas',
+      'osorno', 'valdivia', 'punta arenas', 'coyhaique', 'calama', 'copiapó',
+      'copiapo', 'quillota', 'los andes', 'san antonio', 'quilpué', 'quilpue',
+      'villa alemana', 'curicó', 'curico', 'linares', 'chillán', 'chillan',
+      'los ángeles', 'los angeles', 'angol', 'castro', 'ancud', 'fantasilandia',
+      'mall', 'empanadas', 'completo', 'once', 'feria', 'micro', 'colectivo'
+    ]
+
+    // Helper function to check if a word is a Chilean place/term
+    const isChileanContext = (word) => {
+      const wordLower = word.toLowerCase().trim()
+      return chileanPlaces.some(place => 
+        wordLower === place || 
+        wordLower.includes(place) || 
+        place.includes(wordLower)
+      )
+    }
+
     try {
       // PROFESSIONAL GRAMMAR CHECK using LanguageTool API
       const response = await fetch('https://api.languagetool.org/v2/check', {
@@ -204,8 +226,30 @@ function WritingPractice({ onProgress, onBack }) {
       )
       const vocabularyScore = (usedVocabulary.length / selectedTopic.keyVocabulary.length) * 100
 
-      // Professional Grammar Analysis from LanguageTool
-      const grammarErrors = grammarData.matches || []
+      // Professional Grammar Analysis from LanguageTool - FILTERED FOR CHILEAN CONTEXT
+      const grammarErrors = (grammarData.matches || []).filter(error => {
+        // Extract the problematic word/phrase
+        const errorText = writingText.substring(error.offset, error.offset + error.length)
+        
+        // FILTER OUT: False positives for Chilean place names
+        if (isChileanContext(errorText)) {
+          console.log(`Ignoring false positive for Chilean context: "${errorText}"`)
+          return false
+        }
+
+        // FILTER OUT: Capitalization errors for proper nouns (common with place names)
+        if (error.rule.id === 'UPPERCASE_SENTENCE_START' && isChileanContext(errorText)) {
+          return false
+        }
+
+        // FILTER OUT: "Possible spelling mistake" for known Chilean terms
+        if (error.rule.issueType === 'misspelling' && isChileanContext(errorText)) {
+          return false
+        }
+
+        return true
+      })
+
       const criticalErrors = grammarErrors.filter(e => 
         e.rule.issueType === 'misspelling' || 
         e.rule.issueType === 'grammar' ||
