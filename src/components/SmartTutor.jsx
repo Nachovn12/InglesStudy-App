@@ -22,9 +22,64 @@ BEHAVIOR:
 export default function SmartTutor({ onBack }) {
     const { language } = useContext(LanguageContext);
     
-    // ... states ...
+    // STATES
+    const [status, setStatus] = useState('idle'); // idle, listening, processing, speaking
+    const [transcript, setTranscript] = useState('');
+    const [aiResponse, setAiResponse] = useState("Hello! I'm your AI Tutor. Press the microphone to start talking!");
+    
+    // REFS
+    const recognitionRef = useRef(null);
+    const audioRef = useRef(null);
+    const silenceTimerRef = useRef(null);
 
-    // ... useEffect ...
+    // 1. INITIALIZE SPEECH RECOGNITION
+    useEffect(() => {
+        if ('webkitSpeechRecognition' in window) {
+            const recognition = new window.webkitSpeechRecognition();
+            recognition.continuous = true; // Keep listening until WE decide to stop
+            recognition.interimResults = true;
+            recognition.lang = 'en-US'; 
+
+            recognition.onstart = () => {
+                setStatus('listening');
+            };
+
+            recognition.onresult = (event) => {
+                // Clear any existing silence timer
+                if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
+                // Get latest transcript
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
+                
+                setTranscript(finalTranscript);
+
+                // Start Silence Timer (1.5s) -> if no more speech, assume finished
+                silenceTimerRef.current = setTimeout(() => {
+                    if (finalTranscript.trim().length > 1) {
+                        recognition.stop(); // Stop listening explicitly
+                        handleAiConversation(finalTranscript); // Process
+                    }
+                }, 1500); 
+            };
+
+            recognition.onend = () => {
+                // Determine if we should restart listening or if we are processing
+                // If we are 'processing' or 'speaking', do NOT restart yet.
+                // If we stopped due to silence timer, we are already handling it.
+            };
+            
+            recognitionRef.current = recognition;
+        } else {
+            alert("Your browser does not support Speech Recognition. Please use Chrome.");
+        }
+    }, []);
 
     // ... handleAiConversation ...
     const handleAiConversation = async (userText) => {
