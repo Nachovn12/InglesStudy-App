@@ -379,17 +379,38 @@ function WritingPractice({ onProgress, onBack }) {
   }
 
   const handleComplete = () => {
-    if (wordCount >= 60 && feedback && parseFloat(feedback.score) >= 3.0) {
-      onProgress(10)
-      alert(language === 'es' ? '¡Buen trabajo! Tu escritura ha sido guardada en tu progreso.' : 'Great job! Your writing has been saved to your progress.')
-      setWritingText('')
-      setSelectedTopic(null)
-      setFeedback(null)
-    } else if (!feedback) {
+    if (!feedback) {
       alert(language === 'es' ? 'Primero analiza tu escritura antes de enviar.' : 'Please analyze your writing before submitting.')
-    } else {
-      alert(language === 'es' ? 'Mejora tu escritura según las sugerencias antes de enviar.' : 'Improve your writing based on suggestions before submitting.')
+      return
     }
+
+    if (wordCount < 60) {
+      alert(language === 'es' ? `Necesitas al menos 60 palabras. Conteo actual: ${wordCount}` : `You need at least 60 words. Current count: ${wordCount}`)
+      return
+    }
+
+    const score = parseFloat(feedback.score)
+    
+    // Always save progress, but give different feedback
+    onProgress(10)
+    
+    if (score >= 4.0) {
+      alert(language === 'es' 
+        ? '🎉 ¡Excelente trabajo! Tu escritura ha sido guardada. Puntuación: ' + feedback.score + '/5.0'
+        : '🎉 Excellent work! Your writing has been saved. Score: ' + feedback.score + '/5.0')
+    } else if (score >= 3.0) {
+      alert(language === 'es' 
+        ? '✅ Buen trabajo. Tu escritura ha sido guardada. Puntuación: ' + feedback.score + '/5.0. Sigue practicando para mejorar.'
+        : '✅ Good work. Your writing has been saved. Score: ' + feedback.score + '/5.0. Keep practicing to improve.')
+    } else {
+      alert(language === 'es' 
+        ? '📝 Tu escritura ha sido guardada. Puntuación: ' + feedback.score + '/5.0. Revisa las sugerencias para mejorar en el próximo intento.'
+        : '📝 Your writing has been saved. Score: ' + feedback.score + '/5.0. Review the suggestions to improve next time.')
+    }
+    
+    setWritingText('')
+    setSelectedTopic(null)
+    setFeedback(null)
   }
 
   if (!selectedTopic) {
@@ -551,9 +572,9 @@ function WritingPractice({ onProgress, onBack }) {
             <button
               className="btn btn-primary"
               onClick={handleComplete}
-              disabled={!feedback || parseFloat(feedback.score) < 3.0}
+              disabled={!feedback}
             >
-              {!feedback ? (language === 'es' ? 'Analiza primero' : 'Analyze first') : (parseFloat(feedback.score) < 3.0 ? (language === 'es' ? 'Mejora tu escritura' : 'Improve writing') : `${t('submitWriting')} ✓`)}
+              {!feedback ? (language === 'es' ? 'Analiza primero' : 'Analyze first') : `${t('submitWriting')} ✓`}
             </button>
             <button
               className="btn btn-outline"
