@@ -538,6 +538,10 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
                             : `/uploads/${filename}`
                     };
 
+                    const isNew = (new Date() - new Date(file.uploadDate)) < 86400000;
+                    const previewUrl = getDownloadUrl(file.systemFilename);
+                    const downloadUrl = getForceDownloadUrl(file.systemFilename);
+
                     return (
                       <div key={file.id + '-' + i} className="file-card-premium" style={{
                         position: 'relative',
