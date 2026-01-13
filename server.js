@@ -49,30 +49,85 @@ app.post('/api/synthesize', async (req, res) => {
     return res.status(500).json({ error: 'Servidor no configurado con credenciales de Google.' });
   }
 
-  const text = req.body.text;
+  const text = req.body.text; // Text with markdown headers like **English**
   const isMale = req.body.gender === 'male';
+  const languageCode = req.body.languageCode || 'es-US'; // Default to Spanish/Bilingual if not specified
 
   if (!text) {
     return res.status(400).send('Falta el texto');
   }
 
-  const request = {
-    input: { text: text },
-    voice: { 
-      languageCode: 'en-US', 
-      name: isMale ? 'en-US-Neural2-J' : 'en-US-Neural2-F', // Voces Ultra-Realistas
-      ssmlGender: isMale ? 'MALE' : 'FEMALE' 
-    },
-    audioConfig: { audioEncoding: 'MP3' },
+  // VOICES CONFIGURATION (Neural2 Enterprise Tier)
+  const voices = {
+      en: { m: 'en-US-Neural2-J', f: 'en-US-Neural2-F' },
+      es: { m: 'es-US-Neural2-B', f: 'es-US-Neural2-C' }
+  };
+
+  const selectedVoices = {
+      en: isMale ? voices.en.m : voices.en.f,
+      es: isMale ? voices.es.m : voices.es.f
   };
 
   try {
-    const [response] = await client.synthesizeSpeech(request);
-    res.set('Content-Type', 'audio/mpeg');
-    res.send(response.audioContent);
+      let request;
+      
+      // CASE 1: ENGLISH ONLY REQUEST
+      if (languageCode === 'en-US') {
+          // Force English Neural Voice for the entire text
+          request = {
+            input: { text: text }, // No need for intricate SSML if full English
+            voice: { 
+                languageCode: 'en-US', 
+                name: selectedVoices.en
+            },
+            audioConfig: { audioEncoding: 'MP3' },
+          };
+      } 
+      // CASE 2: BILINGUAL / DEFAULT MODE (Spanish Base with English switches)
+      else {
+          // 1. Clean up Text
+          let cleanText = text.replace(/[*]{3,}/g, '**')
+          cleanText = cleanText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+          // 2. Build SSML
+          let ssml = `<speak>`;
+          const segments = cleanText.split(/(\*\*.*?\*\*)/g);
+          
+          segments.forEach(segment => {
+              if (segment.startsWith('**') && segment.endsWith('**')) {
+                  // English Content
+                  const content = segment.replace(/\*\*/g, '').trim();
+                  if (content) {
+                      ssml += `<voice name="${selectedVoices.en}" languageCode="en-US"><prosody rate="0.9">${content}</prosody></voice> `;
+                  }
+              } else {
+                  // Spanish Content
+                  const content = segment.trim();
+                  if (content) {
+                       ssml += `<voice name="${selectedVoices.es}" languageCode="es-US">${content}</voice> `;
+                  }
+              }
+          });
+          ssml += `</speak>`;
+
+          request = {
+            input: { ssml: ssml },
+            // Base voice must be Spanish Neural2 to support switching
+            voice: { 
+                languageCode: 'es-US', 
+                name: selectedVoices.es 
+            },
+            audioConfig: { audioEncoding: 'MP3' },
+          };
+      }
+
+      const [response] = await client.synthesizeSpeech(request);
+      res.set('Content-Type', 'audio/mpeg');
+      res.send(response.audioContent);
+
   } catch (err) {
     console.error('ERROR en Google Cloud TTS:', err);
-    res.status(500).send(err);
+    res.status(500).send(err.message);
   }
 });
 

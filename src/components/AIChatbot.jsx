@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { Send, X, Bot, Loader2, Volume2, Trash2 } from 'lucide-react'
+import { Send, X, Bot, Loader2, Volume2, Trash2, Play, Square, Pause } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { playAudio } from '../services/googleTTS'
@@ -11,22 +11,39 @@ const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY
 const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
 
 const SYSTEM_PROMPT = `
-You are "EnglishPro", an elite, AI-powered English Tutor designed to be the ultimate companion for language learners. 
-Your goal is to be helpful, encouraging, and highly educational.
+You are "EnglishPro", an elite and friendly AI English Tutor designed specifically for Spanish-speaking beginners (especially from Chile).
+Your goal is to help them learn English with confidence, using clear explanations in Spanish.
 
-**Your Responsibilities:**
-1. **Explain Concepts Clearly**: When asked about grammar or vocabulary, avoid jargon. Use simple, clear explanations with practical examples.
-2. **Translate with Context**: Don't just translate word-for-word. Explain *why* a phrase is used, its tone (formal/informal), and alternatives.
-3. **Correct Gently**: If the user makes a mistake, correct it politely. Example: "Great try! A more natural way to say that represents..." or "Close! technically we use 'on' instead of 'in' here because..."
-4. **Encourage Practice**: After answering, occasionally ask the user to try using the new word/concept in a sentence of their own.
-5. **Bilingual Expertise**: You are fluent in both English and Spanish. If the user asks in Spanish, explain in Spanish but prioritize English examples to foster immersion.
-6. **Structure**: Use Headers (##), Bullet Points (*), and Bold (**text**) to organize long answers beautifully.
+**Your Golden Rules:**
+1.  **Spanish First**: Explain everything in clear Spanish first.
+2.  **BOLD ENGLISH ONLY**: CRITICAL! Bold ('**text**') is a SPECIAL SIGNAL for the voice engine to switch to English Accent.
+    *   ✅ CORRECT: "La palabra es **House**."
+    *   ❌ WRONG: "La palabra **Casa** es **House**." (Never bold Spanish!)
+    *   ❌ WRONG: "**Pronunciación:**" (Never bold headers!) -> Use *Italics* or Plain text for Spanish headings.
+3.  **Strict Formatting**:
+    *   English -> **Bold** (Always)
+    *   Spanish Emphasis -> *Italics*
+    *   Spanish Headers -> Plain Text or *Italics*
+4.  **Bilingual Examples**: Always provide Spanish translation immediately after.
+    *   Example: **I am happy** (Estoy feliz).
+4.  **Encouraging Tone**: Be patient, warm, and motivating. Learning a new language is hard!
+5.  **Local Context (Optional)**: If relevant, use examples that resonate with Chilean culture (like mentioned "tomar once" or local cities) to make it fun, but keep standard English.
+6.  **Structure**:
+    *   Start with a friendly greeting or direct answer in Spanish.
+    *   Show the **English** phrase/concept clearly.
+    *   Explain *why* it is used that way in Spanish.
+    *   Ask a simple follow-up question to practice.
 
-**Tone & Style:**
-*   Professional yet warm and approachable.
-*   Use emojis sparingly to keep interaction friendly (e.g., ✨, 📚, ✅).
-*   Use **bolding** for key terms or corrections to make them stand out.
-*   Keep answers concise (max 3-4 paragraphs) unless asked for a deep dive.
+**Example Interaction:**
+User: "¿Cómo se dice 'tengo hambre'?"
+You: "¡Muy buena pregunta! Se dice:
+**I am hungry** 🍔
+(Literalmente: 'Yo estoy hambriento').
+
+En inglés usamos el verbo 'to be' (ser/estar) para sensaciones, no 'tengo' (have). 
+¡Intenta decir 'I am tired' (Estoy cansado)!"
+
+Keep your responses concise, visual (use emojis), and super helpful for a beginner.
 `
 
 export default function AIChatbot() {
@@ -34,101 +51,108 @@ export default function AIChatbot() {
   const [messages, setMessages] = useState([
     { 
       role: 'model', 
-      text: 'Hello! I am your AI Tutor. Need help with translations or grammar? Ask me anything! 🤖✨' 
+      text: '¡Hola! Soy tu Tutor de Inglés personal con IA. 🤖✨ \n¿En qué te puedo ayudar hoy? \n\nPuedes preguntarme:\n* "Traduce esta frase"\n* "¿Cómo se usa el Pasado Simple?"\n* "Dame un ejemplo con..."\n\n¡Estoy aquí para que aprendas a tu ritmo! 🚀' 
     }
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
+  const [playingMsgIndex, setPlayingMsgIndex] = useState(null)
+  const audioControllerRef = useRef(null)
+  
+  // Typewriter Buffer System
+  const responseBufferRef = useRef('')
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Auto-scroll
   useEffect(() => {
     scrollToBottom()
   }, [messages, isOpen])
+
+  // GLOBAL TYPEWRITER LOOP
+  // This runs continuously and consumes text from the buffer if available.
+  // This guarantees the animation always runs regardless of network timing.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (responseBufferRef.current.length > 0) {
+        const chunk = responseBufferRef.current.slice(0, 2) // Speed: 2 chars per tick
+        responseBufferRef.current = responseBufferRef.current.slice(2)
+        
+        setMessages(prev => {
+          const newMsgs = [...prev]
+          const lastIndex = newMsgs.length - 1
+          
+          if (lastIndex >= 0) {
+              // CRITICAL FIX: Clone the object to avoid mutation in StrictMode (prevents "HolHola" duplication)
+              const updatedMsg = { ...newMsgs[lastIndex] }
+              
+              if (updatedMsg.role === 'model') {
+                  updatedMsg.text += chunk
+                  newMsgs[lastIndex] = updatedMsg
+              }
+          }
+          return newMsgs
+        })
+      }
+    }, 30) // Slower speed: 30ms for better reading experience
+    
+    return () => clearInterval(interval)
+  }, [])
 
   const handleSend = async (textOverride = null) => {
     const textToSend = textOverride || input
     if (!textToSend.trim() || isLoading) return
     
     if (!genAI) {
-      setMessages(prev => [...prev, { role: 'model', text: '⚠️ Setup Error: API Key missing. Please set VITE_GOOGLE_API_KEY in your .env file.' }])
+      setMessages(prev => [...prev, { role: 'model', text: '⚠️ Setup Error: API Key missing.' }])
       return
     }
 
     setInput('')
-    // Add user message
     setMessages(prev => [...prev, { role: 'user', text: textToSend }])
     setIsLoading(true)
 
     try {
-      // Use stable model
+      // Use modern Gemini 2.5 Flash (Agent Optimized - 2026 Standard)
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }) 
       
-      // Filter history to comply with Gemini API Rules:
-      // 1. Alternating roles (User -> Model -> User -> Model)
-      // 2. Must start with 'user'
-      // 3. Remove the initial welcome message if it exists (index 0)
-      
-      let historyForApi = []
-      
-      // Skip the first message if it is the welcome message (model role)
-      const visibleHistory = messages.slice(1) 
-      
-      historyForApi = visibleHistory.map(m => ({
+      // History filtering logic
+      let visibleHistory = messages.slice(1)
+      let historyForApi = visibleHistory.map(m => ({
         role: m.role === 'model' ? 'model' : 'user',
         parts: [{ text: m.text }]
       }))
 
-      // Ensure the history is not empty and starts with user (though slice(1) + our flow ensures this usually)
-      if (historyForApi.length > 0 && historyForApi[0].role !== 'user') {
-         // If for some reason the filtered history starts with model, skip it
+       if (historyForApi.length > 0 && historyForApi[0].role !== 'user') {
          historyForApi = historyForApi.slice(1)
       }
 
       const chat = model.startChat({
         history: historyForApi,
-        generationConfig: {
-          maxOutputTokens: 2000,
-          temperature: 0.7,
-        }
+        generationConfig: { maxOutputTokens: 2000, temperature: 0.7 }
       })
 
       const prompt = messages.length < 2 ? `${SYSTEM_PROMPT}\nUser: ${textToSend}` : textToSend
       
-      // STREAMING IMPLEMENTATION (Typewriter Effect)
+      // Init Stream
       const result = await chat.sendMessageStream(prompt)
       
-      let fullResponse = ""
-      // Add a placeholder message for the model that we will update live
-      setMessages(prev => [...prev, { role: 'model', text: '' }])
+      // Add EMPTY model message to start filling
+      setMessages(prev => [...prev, { role: 'model', text: ' ' }]) 
+      responseBufferRef.current = '' 
 
+      // Consume Stream & Feed Buffer
       for await (const chunk of result.stream) {
         const chunkText = chunk.text()
-        fullResponse += chunkText
-        
-        // Update the last message with the accumulated text
-        setMessages(prev => {
-          const newMessages = [...prev]
-          newMessages[newMessages.length - 1].text = fullResponse
-          return newMessages
-        })
+        responseBufferRef.current += chunkText
       }
 
     } catch (error) {
       console.error('Chat error:', error)
-      setMessages(prev => {
-         // If we started streaming, append error to it, otherwise new message
-         const lastMsg = prev[prev.length - 1]
-         if (lastMsg.role === 'model' && lastMsg.text === '') {
-             const newMsgs = [...prev]
-             newMsgs[newMsgs.length - 1].text = 'Sorry, connection timed out or model unavailable. Please try again! 😓'
-             return newMsgs
-         }
-         return [...prev, { role: 'model', text: 'Sorry, connection error. Please try again! 😓' }]
-      })
+      setMessages(prev => [...prev, { role: 'model', text: 'Error: Could not connect to AI. Please try again.' }])
     } finally {
       setIsLoading(false)
     }
@@ -138,8 +162,55 @@ export default function AIChatbot() {
     if (e.key === 'Enter') handleSend()
   }
 
-  const speak = (text) => {
-    playAudio(text, 'en-US')
+  // Advanced TTS Handler
+  const handleSpeak = async (text, index, onlyEnglish = false) => {
+    // 1. If clicking the SAME message that is playing -> STOP it.
+    if (playingMsgIndex === index) {
+       if (audioControllerRef.current) {
+         audioControllerRef.current.stop()
+         audioControllerRef.current = null
+       }
+       setPlayingMsgIndex(null)
+       return
+    }
+
+    // 2. If clicking a NEW message -> STOP any previous one.
+    if (audioControllerRef.current) {
+      audioControllerRef.current.stop()
+      audioControllerRef.current = null
+    }
+
+    // 3. Prepare Text
+    let textToSpeak = text
+    if (onlyEnglish) {
+      // Regex to extract text inside bold **...**
+      const matches = text.match(/\*\*(.*?)\*\*/g)
+      if (matches && matches.length > 0) {
+        // Join matches and strip asterisks
+        textToSpeak = matches.map(m => m.replace(/\*\*/g, '')).join('. ')
+      } else {
+        // Fallback: If no bold text found, maybe just read all? Or warn?
+        // Let's read all but maybe warn in console.
+        console.log("No bold text found for English extraction, reading full.")
+      }
+    }
+
+    // 4. Play
+    setPlayingMsgIndex(index)
+    // If onlyEnglish is requested, send 'en-US' to force English Neural Voice in backend.
+    // If regular explanation, send 'es-US' to trigger the Bilingual Switching logic in backend.
+    const lang = onlyEnglish ? 'en-US' : 'es-US'
+    const controller = await playAudio(textToSpeak, lang)
+    
+    if (controller) {
+      audioControllerRef.current = controller
+      controller.onEnded(() => {
+        setPlayingMsgIndex(null)
+        audioControllerRef.current = null
+      })
+    } else {
+      setPlayingMsgIndex(null) // Failed to start
+    }
   }
 
   const clearChat = () => {
@@ -205,10 +276,33 @@ export default function AIChatbot() {
                       {msg.text}
                     </ReactMarkdown>
                   </div>
+                  
+                  {/* Footer Actions for Model Messages */}
                   {msg.role === 'model' && msg.text && !isLoading && (
-                    <button className="speak-btn" onClick={() => speak(msg.text)} title="Listen">
-                      <Volume2 size={14} />
-                    </button>
+                    <div className="message-actions" style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
+                      {/* Play Full / Stop Button */}
+                      <button 
+                        className={`speak-btn ${playingMsgIndex === index ? 'playing' : ''}`}
+                        onClick={() => handleSpeak(msg.text, index, false)} 
+                        title={playingMsgIndex === index ? "Stop" : "Read explanation"}
+                        style={{display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'white', cursor: 'pointer'}}
+                      >
+                         {playingMsgIndex === index ? <Square size={14} fill="white" /> : <Volume2 size={16} />}
+                         <span style={{fontSize: '12px'}}>Explicación</span>
+                      </button>
+
+                      {/* Play English Only Button */}
+                      {(msg.text.includes('**')) && (
+                        <button 
+                          onClick={() => handleSpeak(msg.text, index, true)} 
+                          title="Listen to English pronunciation only"
+                          style={{display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #6366f1', background: 'rgba(99, 102, 241, 0.1)', color: '#a5b4fc', cursor: 'pointer'}}
+                        >
+                           <Play size={14} />
+                           <span style={{fontSize: '12px', fontWeight: '500'}}>English Only</span>
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
