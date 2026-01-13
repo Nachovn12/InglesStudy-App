@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from 'react'
 import { LanguageContext } from '../App'
 import { getTranslation } from '../translations'
 import './WritingPractice.css'
+import './WritingPracticeFeedback.css'
 
 function WritingPractice({ onProgress, onBack }) {
   const { language } = useContext(LanguageContext)
@@ -162,14 +163,232 @@ function WritingPractice({ onProgress, onBack }) {
   const isInRange = wordCount >= 60 && wordCount <= 70
   const progress = Math.min(100, (wordCount / 70) * 100)
 
+  // NEW: Analysis state
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [feedback, setFeedback] = useState(null)
+
+  const analyzeWriting = async () => {
+    if (wordCount < 60) {
+      alert(language === 'es' ? `Necesitas al menos 60 palabras. Conteo actual: ${wordCount}` : `You need at least 60 words. Current count: ${wordCount}`)
+      return
+    }
+
+    setIsAnalyzing(true)
+    const textLower = writingText.toLowerCase()
+
+    try {
+      // PROFESSIONAL GRAMMAR CHECK using LanguageTool API
+      const response = await fetch('https://api.languagetool.org/v2/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          text: writingText,
+          language: 'en-US',
+          enabledOnly: 'false'
+        })
+      })
+
+      const grammarData = await response.json()
+      
+      // Analyze connectors usage
+      const usedConnectors = selectedTopic.suggestedConnectors.filter(connector => 
+        textLower.includes(connector.toLowerCase())
+      )
+      const connectorScore = (usedConnectors.length / selectedTopic.suggestedConnectors.length) * 100
+
+      // Analyze key vocabulary
+      const usedVocabulary = selectedTopic.keyVocabulary.filter(word => 
+        textLower.includes(word.toLowerCase())
+      )
+      const vocabularyScore = (usedVocabulary.length / selectedTopic.keyVocabulary.length) * 100
+
+      // Professional Grammar Analysis from LanguageTool
+      const grammarErrors = grammarData.matches || []
+      const criticalErrors = grammarErrors.filter(e => 
+        e.rule.issueType === 'misspelling' || 
+        e.rule.issueType === 'grammar' ||
+        e.rule.category.id === 'GRAMMAR'
+      )
+      const styleIssues = grammarErrors.filter(e => 
+        e.rule.issueType === 'style' || 
+        e.rule.issueType === 'typographical'
+      )
+
+      // Calculate grammar score (inverse of errors)
+      const maxErrors = 10
+      const errorPenalty = Math.min(criticalErrors.length, maxErrors) / maxErrors
+      const grammarScore = Math.max(0, (1 - errorPenalty) * 100)
+
+      // Check for required grammar patterns
+      let requiredGrammarScore = 0
+      const grammarFeedback = []
+      
+      selectedTopic.requiredGrammar.forEach(grammar => {
+        if (grammar.includes('Simple Past')) {
+          const pastVerbs = ['went', 'was', 'were', 'had', 'did', 'visited', 'played', 'watched', 'ate', 'saw', 'took', 'stayed', 'traveled']
+          const foundPastVerbs = pastVerbs.filter(verb => textLower.includes(verb))
+          if (foundPastVerbs.length >= 3) {
+            requiredGrammarScore += 33
+          } else {
+            grammarFeedback.push(language === 'es' ? 'Usa más verbos en pasado simple' : 'Use more simple past verbs')
+          }
+        }
+        if (grammar.includes('Comparative')) {
+          const comparatives = ['bigger', 'smaller', 'more', 'less', 'better', 'worse', 'than']
+          const foundComparatives = comparatives.filter(comp => textLower.includes(comp))
+          if (foundComparatives.length >= 2) {
+            requiredGrammarScore += 33
+          } else {
+            grammarFeedback.push(language === 'es' ? 'Incluye más comparativos' : 'Include more comparatives')
+          }
+        }
+        if (grammar.includes('There is/are') || grammar.includes('There was/were')) {
+          if (textLower.includes('there is') || textLower.includes('there are') || textLower.includes('there was') || textLower.includes('there were')) {
+            requiredGrammarScore += 33
+          } else {
+            grammarFeedback.push(language === 'es' ? 'Usa "there is/are" o "there was/were"' : 'Use "there is/are" or "there was/were"')
+          }
+        }
+      })
+
+      // Calculate final score
+      const totalScore = (
+        connectorScore * 0.2 + 
+        vocabularyScore * 0.2 + 
+        grammarScore * 0.3 +
+        requiredGrammarScore * 0.3
+      ) / 20 // Convert to 5.0 scale
+      const finalScore = Math.min(5.0, Math.max(1.0, totalScore)).toFixed(1)
+
+      let type = 'warning'
+      let message = ''
+      let suggestions = []
+
+      if (finalScore >= 4.0 && criticalErrors.length === 0) {
+        type = 'success'
+        message = language === 'es' 
+          ? '✅ ¡Excelente trabajo! Tu escritura es profesional y cumple con todos los requisitos.'
+          : '✅ Excellent work! Your writing is professional and meets all requirements.'
+      } else if (finalScore >= 3.0) {
+        type = 'warning'
+        message = language === 'es'
+          ? '⚠️ Buen intento. Hay algunos errores que debes corregir.'
+          : '⚠️ Good attempt. There are some errors you should fix.'
+      } else {
+        type = 'error'
+        message = language === 'es'
+          ? '❌ Tu escritura necesita mejoras significativas. Revisa los errores gramaticales.'
+          : '❌ Your writing needs significant improvements. Review the grammar errors.'
+      }
+
+      // Build professional suggestions from LanguageTool
+      if (criticalErrors.length > 0) {
+        criticalErrors.slice(0, 5).forEach(error => {
+          const errorText = writingText.substring(error.offset, error.offset + error.length)
+          const suggestion = error.replacements[0]?.value || ''
+          suggestions.push({
+            type: 'grammar',
+            message: language === 'es' 
+              ? `"${errorText}" → Sugerencia: "${suggestion}" (${error.message})`
+              : `"${errorText}" → Suggestion: "${suggestion}" (${error.message})`,
+            original: errorText,
+            suggestion: suggestion,
+            rule: error.rule.description
+          })
+        })
+      }
+
+      if (styleIssues.length > 0) {
+        styleIssues.slice(0, 3).forEach(issue => {
+          const issueText = writingText.substring(issue.offset, issue.offset + issue.length)
+          suggestions.push({
+            type: 'style',
+            message: language === 'es'
+              ? `Estilo: "${issueText}" - ${issue.message}`
+              : `Style: "${issueText}" - ${issue.message}`,
+            original: issueText,
+            rule: issue.rule.description
+          })
+        })
+      }
+
+      if (connectorScore < 50) {
+        const missingConnectors = selectedTopic.suggestedConnectors.filter(c => !usedConnectors.includes(c)).slice(0, 2)
+        suggestions.push({
+          type: 'connector',
+          message: language === 'es' 
+            ? `Agrega conectores como: ${missingConnectors.join(', ')}`
+            : `Add connectors like: ${missingConnectors.join(', ')}`
+        })
+      }
+
+      if (vocabularyScore < 50) {
+        const missingVocab = selectedTopic.keyVocabulary.filter(v => !usedVocabulary.includes(v)).slice(0, 3)
+        suggestions.push({
+          type: 'vocabulary',
+          message: language === 'es'
+            ? `Usa vocabulario clave: ${missingVocab.join(', ')}`
+            : `Use key vocabulary: ${missingVocab.join(', ')}`
+        })
+      }
+
+      if (grammarFeedback.length > 0) {
+        grammarFeedback.forEach(fb => {
+          suggestions.push({
+            type: 'required',
+            message: fb
+          })
+        })
+      }
+
+      if (wordCount < 65) {
+        suggestions.push({
+          type: 'length',
+          message: language === 'es' 
+            ? 'Intenta escribir más cerca de 70 palabras para más detalles'
+            : 'Try to write closer to 70 words for more details'
+        })
+      }
+
+      setFeedback({
+        score: finalScore,
+        message,
+        type,
+        suggestions,
+        connectorScore: Math.round(connectorScore),
+        vocabularyScore: Math.round(vocabularyScore),
+        grammarScore: Math.round(grammarScore),
+        requiredGrammarScore: Math.round(requiredGrammarScore),
+        usedConnectors,
+        usedVocabulary,
+        totalErrors: criticalErrors.length,
+        styleIssues: styleIssues.length,
+        isProfessional: true
+      })
+      setIsAnalyzing(false)
+
+    } catch (error) {
+      console.error('Error analyzing writing:', error)
+      alert(language === 'es' 
+        ? 'Error al analizar. Por favor, verifica tu conexión a internet.' 
+        : 'Error analyzing. Please check your internet connection.')
+      setIsAnalyzing(false)
+    }
+  }
+
   const handleComplete = () => {
-    if (wordCount >= 60) {
+    if (wordCount >= 60 && feedback && parseFloat(feedback.score) >= 3.0) {
       onProgress(10)
       alert(language === 'es' ? '¡Buen trabajo! Tu escritura ha sido guardada en tu progreso.' : 'Great job! Your writing has been saved to your progress.')
       setWritingText('')
       setSelectedTopic(null)
+      setFeedback(null)
+    } else if (!feedback) {
+      alert(language === 'es' ? 'Primero analiza tu escritura antes de enviar.' : 'Please analyze your writing before submitting.')
     } else {
-      alert(language === 'es' ? `Necesitas al menos 60 palabras. Conteo actual: ${wordCount}` : `You need at least 60 words. Current count: ${wordCount}`)
+      alert(language === 'es' ? 'Mejora tu escritura según las sugerencias antes de enviar.' : 'Improve your writing based on suggestions before submitting.')
     }
   }
 
@@ -323,19 +542,99 @@ function WritingPractice({ onProgress, onBack }) {
 
           <div className="writing-actions">
             <button
+              className="btn btn-accent"
+              onClick={analyzeWriting}
+              disabled={wordCount < 60 || isAnalyzing}
+            >
+              {isAnalyzing ? (language === 'es' ? '🧠 Analizando...' : '🧠 Analyzing...') : (language === 'es' ? '✨ Analizar Escritura' : '✨ Analyze Writing')}
+            </button>
+            <button
               className="btn btn-primary"
               onClick={handleComplete}
-              disabled={wordCount < 60}
+              disabled={!feedback || parseFloat(feedback.score) < 3.0}
             >
-              {wordCount < 60 ? (language === 'es' ? `Necesitas ${60 - wordCount} palabras más` : `Need ${60 - wordCount} more words`) : `${t('submitWriting')} ✓`}
+              {!feedback ? (language === 'es' ? 'Analiza primero' : 'Analyze first') : (parseFloat(feedback.score) < 3.0 ? (language === 'es' ? 'Mejora tu escritura' : 'Improve writing') : `${t('submitWriting')} ✓`)}
             </button>
             <button
               className="btn btn-outline"
-              onClick={() => setWritingText('')}
+              onClick={() => {
+                setWritingText('')
+                setFeedback(null)
+              }}
             >
               {t('clear')}
             </button>
           </div>
+
+          {/* AI FEEDBACK CARD */}
+          {feedback && !isAnalyzing && (
+            <div className={`ai-feedback-card ${feedback.type}`} style={{ marginTop: '20px' }}>
+              <div className="feedback-header">
+                <div className="feedback-score">
+                  <span className="score-num">{feedback.score}</span>
+                  <span className="score-max">/ 5.0</span>
+                </div>
+                <div className="feedback-badge">
+                  {feedback.type === 'success' ? (language === 'es' ? 'EXCELENTE' : 'EXCELLENT') : feedback.type === 'warning' ? (language === 'es' ? 'BUENO' : 'GOOD') : (language === 'es' ? 'SIGUE INTENTANDO' : 'KEEP TRYING')}
+                </div>
+              </div>
+              <p className="feedback-message">{feedback.message}</p>
+              
+              {/* Detailed Scores */}
+              <div className="detailed-scores">
+                <div className="score-item">
+                  <span className="score-label">{language === 'es' ? 'Conectores' : 'Connectors'}:</span>
+                  <span className={`score-value ${feedback.connectorScore >= 50 ? 'good' : 'needs-work'}`}>{feedback.connectorScore}%</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">{language === 'es' ? 'Vocabulario' : 'Vocabulary'}:</span>
+                  <span className={`score-value ${feedback.vocabularyScore >= 50 ? 'good' : 'needs-work'}`}>{feedback.vocabularyScore}%</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">{language === 'es' ? 'Gramática' : 'Grammar'}:</span>
+                  <span className={`score-value ${feedback.grammarScore >= 50 ? 'good' : 'needs-work'}`}>{feedback.grammarScore}%</span>
+                </div>
+              </div>
+
+              {/* Suggestions */}
+              {feedback.suggestions.length > 0 && (
+                <div className="suggestions-section">
+                  <h5>{language === 'es' ? '💡 Correcciones y Sugerencias Profesionales:' : '💡 Professional Corrections & Suggestions:'}</h5>
+                  {feedback.isProfessional && feedback.totalErrors > 0 && (
+                    <div className="error-summary">
+                      <strong>{language === 'es' ? 'Errores encontrados:' : 'Errors found:'}</strong> {feedback.totalErrors} {language === 'es' ? 'gramaticales' : 'grammar'}, {feedback.styleIssues} {language === 'es' ? 'de estilo' : 'style'}
+                    </div>
+                  )}
+                  <ul>
+                    {feedback.suggestions.map((suggestion, index) => (
+                      <li key={index} className={`suggestion-item suggestion-${suggestion.type || 'general'}`}>
+                        {suggestion.type === 'grammar' && <span className="suggestion-badge grammar">Grammar</span>}
+                        {suggestion.type === 'style' && <span className="suggestion-badge style">Style</span>}
+                        {suggestion.type === 'connector' && <span className="suggestion-badge connector">Connector</span>}
+                        {suggestion.type === 'vocabulary' && <span className="suggestion-badge vocabulary">Vocabulary</span>}
+                        {suggestion.type === 'required' && <span className="suggestion-badge required">Required</span>}
+                        {suggestion.type === 'length' && <span className="suggestion-badge length">Length</span>}
+                        <span className="suggestion-text">{suggestion.message || suggestion}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* What you used well */}
+              {(feedback.usedConnectors.length > 0 || feedback.usedVocabulary.length > 0) && (
+                <div className="used-well-section">
+                  <h5>{language === 'es' ? '✅ Lo que usaste bien:' : '✅ What you used well:'}</h5>
+                  {feedback.usedConnectors.length > 0 && (
+                    <p><strong>{language === 'es' ? 'Conectores:' : 'Connectors:'}</strong> {feedback.usedConnectors.join(', ')}</p>
+                  )}
+                  {feedback.usedVocabulary.length > 0 && (
+                    <p><strong>{language === 'es' ? 'Vocabulario:' : 'Vocabulary:'}</strong> {feedback.usedVocabulary.join(', ')}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {showGuidance && (
