@@ -95,26 +95,43 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
   const [secretClicks, setSecretClicks] = useState(0)
 
   // --- FILE FUNCTIONS ---
+  // Detect Vercel Environment
+  const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel');
+
   const openFiles = async (examId, title) => {
     setSelectedExamId(examId)
     setSelectedExamTitle(title)
     setShowFileModal(true)
-    setAdminCode('') 
-    setSecretClicks(0) // Reset secret counter
-    setIsAdminUnlocked(false)
-    
+    setExamFiles([])
     setLoadingFiles(true)
+    
+    // Admin unlock reset
+    setSecretClicks(0)
+    setIsAdminUnlocked(false)
+
     try {
-        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? `http://localhost:3001/api/files/${examId}` 
-          : `/api/files/${examId}`;
-          
-        const res = await fetch(apiUrl)
-        if (res.ok) {
-            const data = await res.json()
-            setExamFiles(data)
+        if (isVercel) {
+            // ☁️ MODO VERCEL: Leer índice estático
+            const res = await fetch('/static-files.json');
+            if (res.ok) {
+                const allFiles = await res.json();
+                // Filtrar por examen
+                const myFiles = allFiles.filter(f => f.examId === examId);
+                setExamFiles(myFiles);
+            }
         } else {
-            setExamFiles([])
+            // 🏠 MODO LOCAL: Usar API Backend
+            const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+              ? `http://localhost:3001/api/files/${examId}`
+              : `/api/files/${examId}`;
+              
+            const res = await fetch(apiUrl)
+            if (res.ok) {
+                const data = await res.json()
+                setExamFiles(data)
+            } else {
+                setExamFiles([])
+            }
         }
     } catch (e) {
         console.error("Error fetching files", e)
@@ -125,6 +142,9 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
   }
 
   const handleDelete = async (filename) => {
+      // No delete on Vercel
+      if (isVercel) return;
+
       if(!window.confirm(language === 'es' ? "¿Estás seguro de eliminar este archivo?" : "Are you sure you want to delete this file?")) return;
       
       try {
@@ -152,6 +172,12 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
   }
 
   const uploadFile = async (e) => {
+      // No upload on Vercel
+      if (isVercel) {
+          alert("⚠️ MODO VERCEL: La subida está desactivada. Sube archivos en Localhost y haz deploy.");
+          return;
+      }
+
       const files = e.target.files
       if (!files || files.length === 0) return
 
@@ -184,6 +210,8 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
           alert("Upload Error")
       } finally {
           setIsUploading(false)
+          // Reset input
+          e.target.value = null
       }
   }
 
@@ -494,14 +522,21 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
                     if (isPdf) tags.push({ label: 'PDF', color: '#ef4444' });
 
                     const getForceDownloadUrl = (filename) => {
+                        if (isVercel) return `/materials/${filename}`;
+                        
                         return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                             ? `http://localhost:3001/api/download/${filename}`
                             : `/api/download/${filename}` 
                     }
                     
-                    const isNew = (new Date() - new Date(file.uploadDate)) < 86400000;
-                    const previewUrl = getDownloadUrl(file.systemFilename);
-                    const downloadUrl = getForceDownloadUrl(file.systemFilename);
+                    const getDownloadUrl = (filename) => {
+                         // For preview
+                         if (isVercel) return `/materials/${filename}`;
+                         
+                         return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                            ? `http://localhost:3001/uploads/${filename}`
+                            : `/uploads/${filename}`
+                    };
 
                     return (
                       <div key={file.id + '-' + i} className="file-card-premium" style={{
