@@ -265,78 +265,111 @@ function WritingPractice({ onProgress, onBack }) {
       const errorPenalty = Math.min(criticalErrors.length, maxErrors) / maxErrors
       const grammarScore = Math.max(0, (1 - errorPenalty) * 100)
 
-      // Check for required grammar patterns
+      // Check for required grammar patterns with DETAILED FEEDBACK
       let requiredGrammarScore = 0
       const grammarFeedback = []
+      const missingElements = []
       
       selectedTopic.requiredGrammar.forEach(grammar => {
         if (grammar.includes('Simple Past')) {
-          const pastVerbs = ['went', 'was', 'were', 'had', 'did', 'visited', 'played', 'watched', 'ate', 'saw', 'took', 'stayed', 'traveled']
+          const pastVerbs = ['went', 'was', 'were', 'had', 'did', 'visited', 'played', 'watched', 'ate', 'saw', 'took', 'stayed', 'traveled', 'bought', 'wrote', 'made', 'came', 'left']
           const foundPastVerbs = pastVerbs.filter(verb => textLower.includes(verb))
           if (foundPastVerbs.length >= 3) {
             requiredGrammarScore += 33
           } else {
-            grammarFeedback.push(language === 'es' ? 'Usa más verbos en pasado simple' : 'Use more simple past verbs')
+            missingElements.push({
+              type: 'grammar',
+              element: 'Simple Past Verbs',
+              found: foundPastVerbs.length,
+              needed: 3,
+              examples: 'went, visited, stayed, ate, saw, took'
+            })
+            grammarFeedback.push(language === 'es' ? 'Usa más verbos en pasado simple (went, visited, stayed)' : 'Use more simple past verbs (went, visited, stayed)')
           }
         }
         if (grammar.includes('Comparative')) {
-          const comparatives = ['bigger', 'smaller', 'more', 'less', 'better', 'worse', 'than']
+          const comparatives = ['bigger', 'smaller', 'more', 'less', 'better', 'worse', 'than', 'faster', 'slower', 'easier', 'harder', 'hotter', 'colder']
           const foundComparatives = comparatives.filter(comp => textLower.includes(comp))
           if (foundComparatives.length >= 2) {
             requiredGrammarScore += 33
           } else {
-            grammarFeedback.push(language === 'es' ? 'Incluye más comparativos' : 'Include more comparatives')
+            missingElements.push({
+              type: 'grammar',
+              element: 'Comparatives',
+              found: foundComparatives.length,
+              needed: 2,
+              examples: 'bigger than, more beautiful than, better than'
+            })
+            grammarFeedback.push(language === 'es' ? 'Incluye comparativos (bigger than, more beautiful than)' : 'Include comparatives (bigger than, more beautiful than)')
           }
         }
         if (grammar.includes('There is/are') || grammar.includes('There was/were')) {
           if (textLower.includes('there is') || textLower.includes('there are') || textLower.includes('there was') || textLower.includes('there were')) {
             requiredGrammarScore += 33
           } else {
-            grammarFeedback.push(language === 'es' ? 'Usa "there is/are" o "there was/were"' : 'Use "there is/are" or "there was/were"')
+            missingElements.push({
+              type: 'grammar',
+              element: 'There is/are or There was/were',
+              found: 0,
+              needed: 1,
+              examples: 'There were many activities, There was a beautiful beach'
+            })
+            grammarFeedback.push(language === 'es' ? 'Usa "there is/are" o "there was/were" (Ej: There were many activities)' : 'Use "there is/are" or "there was/were" (Ex: There were many activities)')
           }
         }
       })
 
-      // Calculate final score
+      // Calculate final score with weighted components
       const totalScore = (
-        connectorScore * 0.2 + 
-        vocabularyScore * 0.2 + 
-        grammarScore * 0.3 +
-        requiredGrammarScore * 0.3
+        connectorScore * 0.25 + 
+        vocabularyScore * 0.20 + 
+        grammarScore * 0.30 +
+        requiredGrammarScore * 0.25
       ) / 20 // Convert to 5.0 scale
       const finalScore = Math.min(5.0, Math.max(1.0, totalScore)).toFixed(1)
 
       let type = 'warning'
       let message = ''
       let suggestions = []
+      let strengths = []
 
-      if (finalScore >= 4.0 && criticalErrors.length === 0) {
+      // PROFESSIONAL FEEDBACK MESSAGES
+      if (finalScore >= 4.5 && criticalErrors.length === 0) {
         type = 'success'
         message = language === 'es' 
-          ? '✅ ¡Excelente trabajo! Tu escritura es profesional y cumple con todos los requisitos.'
-          : '✅ Excellent work! Your writing is professional and meets all requirements.'
+          ? '🎉 ¡Excelente trabajo! Tu escritura es de nivel profesional. Cumples con todos los requisitos del tema.'
+          : '🎉 Excellent work! Your writing is professional level. You meet all topic requirements.'
+        strengths.push(language === 'es' ? 'Gramática impecable' : 'Impeccable grammar')
+        strengths.push(language === 'es' ? 'Uso correcto de estructuras' : 'Correct use of structures')
+      } else if (finalScore >= 4.0) {
+        type = 'success'
+        message = language === 'es'
+          ? '✅ ¡Muy buen trabajo! Tu escritura es sólida. Solo pequeños ajustes para perfeccionarla.'
+          : '✅ Very good work! Your writing is solid. Just minor adjustments to perfect it.'
       } else if (finalScore >= 3.0) {
         type = 'warning'
         message = language === 'es'
-          ? '⚠️ Buen intento. Hay algunos errores que debes corregir.'
-          : '⚠️ Good attempt. There are some errors you should fix.'
+          ? '⚠️ Buen intento. Tu escritura tiene una base sólida, pero necesita algunos elementos clave del tema.'
+          : '⚠️ Good attempt. Your writing has a solid foundation but needs some key topic elements.'
       } else {
         type = 'error'
         message = language === 'es'
-          ? '❌ Tu escritura necesita mejoras significativas. Revisa los errores gramaticales.'
-          : '❌ Your writing needs significant improvements. Review the grammar errors.'
+          ? '❌ Tu escritura necesita mejoras. Revisa los errores gramaticales y asegúrate de incluir las estructuras requeridas.'
+          : '❌ Your writing needs improvements. Review grammar errors and ensure you include required structures.'
       }
 
-      // Build professional suggestions from LanguageTool
+      // Build DETAILED professional suggestions from LanguageTool
       if (criticalErrors.length > 0) {
         criticalErrors.slice(0, 5).forEach(error => {
           const errorText = writingText.substring(error.offset, error.offset + error.length)
           const suggestion = error.replacements[0]?.value || ''
           suggestions.push({
             type: 'grammar',
+            priority: 'high',
             message: language === 'es' 
-              ? `"${errorText}" → Sugerencia: "${suggestion}" (${error.message})`
-              : `"${errorText}" → Suggestion: "${suggestion}" (${error.message})`,
+              ? `"${errorText}" → Corrección: "${suggestion}"`
+              : `"${errorText}" → Correction: "${suggestion}"`,
+            explanation: error.message,
             original: errorText,
             suggestion: suggestion,
             rule: error.rule.description
@@ -345,10 +378,11 @@ function WritingPractice({ onProgress, onBack }) {
       }
 
       if (styleIssues.length > 0) {
-        styleIssues.slice(0, 3).forEach(issue => {
+        styleIssues.slice(0, 2).forEach(issue => {
           const issueText = writingText.substring(issue.offset, issue.offset + issue.length)
           suggestions.push({
             type: 'style',
+            priority: 'medium',
             message: language === 'es'
               ? `Estilo: "${issueText}" - ${issue.message}`
               : `Style: "${issueText}" - ${issue.message}`,
@@ -358,13 +392,29 @@ function WritingPractice({ onProgress, onBack }) {
         })
       }
 
+      // Add MISSING ELEMENTS with examples
+      if (missingElements.length > 0) {
+        missingElements.forEach(missing => {
+          suggestions.push({
+            type: 'required',
+            priority: 'high',
+            message: language === 'es'
+              ? `Falta: ${missing.element}. Ejemplos: "${missing.examples}"`
+              : `Missing: ${missing.element}. Examples: "${missing.examples}"`,
+            element: missing.element,
+            examples: missing.examples
+          })
+        })
+      }
+
       if (connectorScore < 50) {
-        const missingConnectors = selectedTopic.suggestedConnectors.filter(c => !usedConnectors.includes(c)).slice(0, 2)
+        const missingConnectors = selectedTopic.suggestedConnectors.filter(c => !usedConnectors.includes(c)).slice(0, 3)
         suggestions.push({
           type: 'connector',
+          priority: 'medium',
           message: language === 'es' 
-            ? `Agrega conectores como: ${missingConnectors.join(', ')}`
-            : `Add connectors like: ${missingConnectors.join(', ')}`
+            ? `Agrega conectores para mejorar el flujo: "${missingConnectors.join('", "')}"`
+            : `Add connectors to improve flow: "${missingConnectors.join('", "')}"`
         })
       }
 
@@ -372,28 +422,35 @@ function WritingPractice({ onProgress, onBack }) {
         const missingVocab = selectedTopic.keyVocabulary.filter(v => !usedVocabulary.includes(v)).slice(0, 3)
         suggestions.push({
           type: 'vocabulary',
+          priority: 'medium',
           message: language === 'es'
-            ? `Usa vocabulario clave: ${missingVocab.join(', ')}`
-            : `Use key vocabulary: ${missingVocab.join(', ')}`
-        })
-      }
-
-      if (grammarFeedback.length > 0) {
-        grammarFeedback.forEach(fb => {
-          suggestions.push({
-            type: 'required',
-            message: fb
-          })
+            ? `Incluye vocabulario clave del tema: "${missingVocab.join('", "')}"`
+            : `Include key topic vocabulary: "${missingVocab.join('", "')}"`
         })
       }
 
       if (wordCount < 65) {
         suggestions.push({
           type: 'length',
+          priority: 'low',
           message: language === 'es' 
-            ? 'Intenta escribir más cerca de 70 palabras para más detalles'
-            : 'Try to write closer to 70 words for more details'
+            ? `Escribe ${70 - wordCount} palabras más para alcanzar el óptimo de 70 palabras`
+            : `Write ${70 - wordCount} more words to reach the optimal 70 words`
         })
+      }
+
+      // Identify STRENGTHS
+      if (grammarScore >= 80) {
+        strengths.push(language === 'es' ? 'Excelente gramática' : 'Excellent grammar')
+      }
+      if (connectorScore >= 60) {
+        strengths.push(language === 'es' ? 'Buen uso de conectores' : 'Good use of connectors')
+      }
+      if (vocabularyScore >= 60) {
+        strengths.push(language === 'es' ? 'Vocabulario apropiado' : 'Appropriate vocabulary')
+      }
+      if (isInRange) {
+        strengths.push(language === 'es' ? 'Longitud perfecta' : 'Perfect length')
       }
 
       setFeedback({
@@ -401,6 +458,7 @@ function WritingPractice({ onProgress, onBack }) {
         message,
         type,
         suggestions,
+        strengths,
         connectorScore: Math.round(connectorScore),
         vocabularyScore: Math.round(vocabularyScore),
         grammarScore: Math.round(grammarScore),
@@ -661,6 +719,18 @@ function WritingPractice({ onProgress, onBack }) {
                 </div>
               </div>
 
+              {/* Strengths Section */}
+              {feedback.strengths && feedback.strengths.length > 0 && (
+                <div className="strengths-section">
+                  <h5>{language === 'es' ? '✨ Fortalezas de tu escritura:' : '✨ Your writing strengths:'}</h5>
+                  <div className="strengths-list">
+                    {feedback.strengths.map((strength, index) => (
+                      <span key={index} className="strength-badge">✓ {strength}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Suggestions */}
               {feedback.suggestions.length > 0 && (
                 <div className="suggestions-section">
@@ -672,13 +742,14 @@ function WritingPractice({ onProgress, onBack }) {
                   )}
                   <ul>
                     {feedback.suggestions.map((suggestion, index) => (
-                      <li key={index} className={`suggestion-item suggestion-${suggestion.type || 'general'}`}>
+                      <li key={index} className={`suggestion-item suggestion-${suggestion.type || 'general'} priority-${suggestion.priority || 'medium'}`}>
                         {suggestion.type === 'grammar' && <span className="suggestion-badge grammar">Grammar</span>}
                         {suggestion.type === 'style' && <span className="suggestion-badge style">Style</span>}
                         {suggestion.type === 'connector' && <span className="suggestion-badge connector">Connector</span>}
                         {suggestion.type === 'vocabulary' && <span className="suggestion-badge vocabulary">Vocabulary</span>}
                         {suggestion.type === 'required' && <span className="suggestion-badge required">Required</span>}
                         {suggestion.type === 'length' && <span className="suggestion-badge length">Length</span>}
+                        {suggestion.priority === 'high' && <span className="priority-indicator high">!</span>}
                         <span className="suggestion-text">{suggestion.message || suggestion}</span>
                       </li>
                     ))}

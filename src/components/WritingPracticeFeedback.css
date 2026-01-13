@@ -231,6 +231,75 @@
   line-height: 1.5;
 }
 
+/* Priority Indicators */
+.priority-indicator {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 20px;
+  font-weight: 900;
+  font-size: 0.8rem;
+  margin-right: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.priority-indicator.high {
+  background: var(--error);
+  color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.suggestion-item.priority-high {
+  border-left-width: 4px;
+  border-left-color: var(--error);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* Strengths Section */
+.strengths-section {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: rgba(34, 197, 94, 0.05);
+  border-left: 3px solid var(--success);
+  border-radius: var(--radius-md);
+}
+
+.strengths-section h5 {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.strengths-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.strength-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--success);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
 /* Used Well Section */
 .used-well-section {
   margin-top: var(--spacing-lg);
