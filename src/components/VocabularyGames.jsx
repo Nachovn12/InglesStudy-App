@@ -70,11 +70,45 @@ function VocabularyGames({ onProgress, onBack }) {
   ]
 
   const vocabularyData = {
-    // ... (vocabulary data remains unchanged)
     professions: [
-      { english: 'Singer', spanish: 'Cantante', emoji: '🎤' },
-      { english: 'Painter', spanish: 'Pintor/a', emoji: '🎨' },
-      // ...
+        { english: 'Singer', spanish: 'Cantante', emoji: '🎤' },
+        { english: 'Painter', spanish: 'Pintor/a', emoji: '🎨' },
+        { english: 'Doctor', spanish: 'Doctor', emoji: '👨‍⚕️' },
+        { english: 'Teacher', spanish: 'Profesor', emoji: '👨‍🏫' },
+        { english: 'Engineer', spanish: 'Ingeniero', emoji: '👷' },
+        { english: 'Layer', spanish: 'Abogado', emoji: '⚖️' }
+    ],
+    house: [
+        { english: 'Kitchen', spanish: 'Cocina', emoji: '🍳' },
+        { english: 'Bedroom', spanish: 'Dormitorio', emoji: '🛏️' },
+        { english: 'Bathroom', spanish: 'Baño', emoji: '🚽' },
+        { english: 'Living Room', spanish: 'Sala', emoji: '🛋️' },
+        { english: 'Garden', spanish: 'Jardín', emoji: '🏡' },
+        { english: 'Door', spanish: 'Puerta', emoji: '🚪' }
+    ],
+    food: [
+        { english: 'Pizza', spanish: 'Pizza', emoji: '🍕' },
+        { english: 'Burger', spanish: 'Hamburguesa', emoji: '🍔' },
+        { english: 'Water', spanish: 'Agua', emoji: '💧' },
+        { english: 'Coffee', spanish: 'Café', emoji: '☕' },
+        { english: 'Apple', spanish: 'Manzana', emoji: '🍎' },
+        { english: 'Bread', spanish: 'Pan', emoji: '🍞' }
+    ],
+    collocations: [
+        { english: 'Make a mistake', spanish: 'Cometer un error', emoji: '❌' },
+        { english: 'Do homework', spanish: 'Hacer tarea', emoji: '📝' },
+        { english: 'Take a photo', spanish: 'Tomar una foto', emoji: '📸' },
+        { english: 'Have fun', spanish: 'Divertirse', emoji: '🎉' },
+        { english: 'Save money', spanish: 'Ahorrar dinero', emoji: '💰' },
+        { english: 'Pay attention', spanish: 'Poner atención', emoji: '👂' }
+    ],
+    restaurant: [
+        { english: 'Menu', spanish: 'Menú', emoji: '📋' },
+        { english: 'Waiter', spanish: 'Mesero', emoji: '🤵' },
+        { english: 'Bill', spanish: 'Cuenta', emoji: '🧾' },
+        { english: 'Table', spanish: 'Mesa', emoji: '🍽️' },
+        { english: 'Chef', spanish: 'Chef', emoji: '👨‍🍳' },
+        { english: 'Order', spanish: 'Orden', emoji: '📝' }
     ]
   }
 
@@ -180,7 +214,8 @@ function VocabularyGames({ onProgress, onBack }) {
     setMatchedCards([])
     
     // Create pairs for matching game
-    const words = vocabularyData[categoryId].slice(0, 6) // Use 6 pairs
+    const words = (vocabularyData[categoryId] || []).slice(0, 6) // Use 6 pairs
+    if (words.length === 0) return; // Prevent crash
     const pairs = []
     words.forEach((word, index) => {
       pairs.push({ id: index * 2, text: word.english, pairId: index, type: 'english' })
@@ -321,7 +356,8 @@ function VocabularyGames({ onProgress, onBack }) {
   }
 
   if (gameMode === 'flashcards') {
-    const words = vocabularyData[currentCategory]
+    const words = vocabularyData[currentCategory] || []
+    if (!words.length) return <div className="p-4 text-center">Loading words...</div>
     const currentWord = words[currentCard]
     const categoryInfo = categories.find(c => c.id === currentCategory)
     const progress = ((currentCard + 1) / words.length) * 100
