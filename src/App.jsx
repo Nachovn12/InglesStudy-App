@@ -8,6 +8,7 @@ import VocabularyGames from './components/VocabularyGames'
 import SpeakingSimulator from './components/SpeakingSimulator'
 import ListeningPractice from './components/ListeningPractice'
 import WritingPractice from './components/WritingPractice'
+import ComparativeGame from './components/ComparativeGame'
 import ProgressTracker from './components/ProgressTracker'
 import StudyGuide from './components/StudyGuide'
 
@@ -25,7 +26,8 @@ function App() {
     vocabulary: 0,
     speaking: 0,
     listening: 0,
-    writing: 0
+    writing: 0,
+    comparativeGame: 0
   })
 
   // Theme management
@@ -47,7 +49,8 @@ function App() {
         vocabulary: 0,
         speaking: 0,
         listening: 0,
-        writing: 0
+        writing: 0,
+        comparativeGame: 0
       })
       alert(language === 'es' 
         ? '¡Progreso reiniciado exitosamente!' 
@@ -73,6 +76,8 @@ function App() {
         return <WritingPractice onProgress={(val) => updateProgress('writing', val)} onBack={() => setCurrentView('dashboard')} />
       case 'progress':
         return <ProgressTracker progress={progress} onBack={() => setCurrentView('dashboard')} />
+      case 'comparative-game':
+        return <ComparativeGame onProgress={(val) => updateProgress('comparativeGame', val)} onBack={() => setCurrentView('dashboard')} />
       case 'study-guide':
         return <StudyGuide onBack={() => setCurrentView('dashboard')} />
       default:

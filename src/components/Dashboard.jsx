@@ -64,6 +64,16 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
       progress: progress.writing
     },
     {
+      id: 'comparative-game',
+      title: language === 'es' ? `🎯 Juego de Comparaciones` : `🎯 Comparative Game`,
+      description: language === 'es' ? 'Practica comparativos de forma interactiva' : 'Practice comparatives interactively',
+      color: '#10b981',
+      topics: language === 'es' 
+        ? ['Comparativos Cortos', 'Comparativos Largos', 'Irregulares', 'Escribir y Hablar']
+        : ['Short Comparatives', 'Long Comparatives', 'Irregulars', 'Write & Speak'],
+      progress: progress.comparativeGame || 0
+    },
+    {
       id: 'study-guide',
       title: language === 'es' ? `🆘 Guía de Estudio y Diccionario` : `🆘 Study Guide & Dictionary`,
       description: language === 'es' ? 'Kit de Emergencia: Diccionario y Gramática' : 'Emergency Kit: Dictionary & Grammar',
@@ -76,7 +86,7 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
   ]
 
   const totalProgress = Math.round(
-    (progress.grammar + progress.vocabulary + progress.speaking + progress.listening + progress.writing) / 5
+    (progress.grammar + progress.vocabulary + progress.speaking + progress.listening + progress.writing + (progress.comparativeGame || 0)) / 6
   )
 
   return (
