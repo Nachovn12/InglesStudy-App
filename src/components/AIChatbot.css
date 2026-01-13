@@ -1,9 +1,17 @@
 .ai-chatbot-container {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 0;
   z-index: 9999;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  pointer-events: none;
+}
+
+.ai-chatbot-container > * {
+  pointer-events: auto;
 }
 
 /* Toggle Button */
@@ -20,7 +28,10 @@
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10001;
 }
 
 .chat-toggle-btn:hover {
@@ -53,8 +64,9 @@
   width: 360px;
   height: 600px;
   max-height: 80vh;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(15, 23, 42, 0.98);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
@@ -63,11 +75,21 @@
   overflow: hidden;
   animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transform-origin: bottom right;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: scale(0.8) translateY(20px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* Header */
@@ -78,18 +100,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .header-info {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .avatar-bot {
@@ -102,6 +128,7 @@
   justify-content: center;
   color: white;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  flex-shrink: 0;
 }
 
 .chat-header h3 {
@@ -128,27 +155,31 @@
   box-shadow: 0 0 8px #22c55e;
 }
 
-.action-btn, .close-btn {
+.action-btn,
+.close-btn {
   background: transparent;
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  padding: 6px;
+  padding: 8px;
   border-radius: 8px;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
 }
 
-.action-btn:hover, .close-btn:hover {
+.action-btn:hover,
+.close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   transform: scale(1.1);
 }
 
 .action-btn:hover {
-  color: #ef4444; /* Red for trash */
+  color: #ef4444;
 }
 
 /* Messages Area */
@@ -156,10 +187,26 @@
   flex: 1;
   padding: 16px;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 16px;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.messages-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 .message {
@@ -193,6 +240,7 @@
   font-size: 0.95rem;
   line-height: 1.5;
   word-wrap: break-word;
+  word-break: break-word;
   position: relative;
 }
 
@@ -204,7 +252,7 @@
 }
 
 .message.model .message-content {
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(30, 41, 59, 0.9);
   color: #e2e8f0;
   border-bottom-left-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -237,7 +285,8 @@
   gap: 8px;
   padding: 0 16px 12px;
   overflow-x: auto;
-  scrollbar-width: none; /* Hide scrollbar */
+  scrollbar-width: none;
+  flex-shrink: 0;
 }
 
 .quick-actions::-webkit-scrollbar {
@@ -248,12 +297,13 @@
   background: rgba(99, 102, 241, 0.1);
   border: 1px solid rgba(99, 102, 241, 0.2);
   color: #a5b4fc;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 20px;
   font-size: 0.8rem;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .quick-actions button:hover {
@@ -268,7 +318,8 @@
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   gap: 10px;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.95);
+  flex-shrink: 0;
 }
 
 .input-area input {
@@ -281,6 +332,10 @@
   font-size: 0.95rem;
   outline: none;
   transition: all 0.2s;
+}
+
+.input-area input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .input-area input:focus {
@@ -302,6 +357,7 @@
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  flex-shrink: 0;
 }
 
 .input-area button:hover:not(:disabled) {
@@ -334,12 +390,22 @@
   animation: bounce 1.4s infinite ease-in-out both;
 }
 
-.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+.typing-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.typing-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
 
 @keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 .spin {
@@ -347,6 +413,104 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================
+   MOBILE RESPONSIVE - PROFESSIONAL BOTTOM SHEET
+   ======================================== */
+
+@media (max-width: 768px) {
+  /* Chat Window - Full Screen Professional (Native App Feel) */
+  .chat-window {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    
+    /* Solid Background */
+    background: #0f172a !important; 
+    background-color: #0f172a !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    
+    /* No rounded corners in full screen */
+    border-radius: 0 !important;
+    border: none !important;
+    
+    transform-origin: bottom center !important;
+    margin: 0 !important;
+    z-index: 20000 !important; /* Highest priority */
+    /* display: flex !important;  <-- REMOVED to allow closing */
+    flex-direction: column !important;
+  }
+
+  /* Header - Adapted for Top Safe Area */
+  .chat-header {
+    background: #0f172a !important;
+    padding: 16px 20px;
+    padding-top: max(16px, env(safe-area-inset-top)); /* Handle Notch */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0 !important;
+  }
+
+  /* Toggle Button - PERFECT CIRCLE */
+  .chat-toggle-btn {
+    position: fixed;
+    right: 20px !important;
+    bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important;
+    z-index: 10000;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important; /* Force Circle */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Messages Area */
+  .messages-area {
+    padding: 16px 20px;
+    padding-bottom: 8px; /* Slightly less padding at bottom */
+  }
+
+  /* Input Area - Safe Area Aware */
+  .input-area {
+    padding: 16px 20px;
+    padding-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+    background: #0f172a !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Prevent Zoom on Input */
+  .input-area input {
+    font-size: 16px !important;
+  }
+
+  /* Hide Tooltip on Mobile */
+  .chat-toggle-btn .tooltip {
+    display: none !important;
+  }
+}
+
+/* Full screen on ALL mobile devices */
+@media (max-width: 375px) {
+  .chat-window {
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+  }
 }

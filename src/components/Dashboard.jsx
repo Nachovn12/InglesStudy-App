@@ -257,21 +257,59 @@ function Dashboard({ onNavigate, progress, onResetProgress }) {
         <h1 className="header-title">🎓 {t('appTitle')}</h1>
         <p className="header-subtitle">{t('appSubtitle')}</p>
         
-        <div className="exam-countdown">
-           <div className="countdown-item">
-            <span className="countdown-label">{t('writtenExam')}</span>
-            <span className="countdown-value">{daysLeft} {t('days')}</span>
+        <div className="progress-summary-card">
+          <div className="progress-header">
+            <div className="current-level">
+              <span className="level-label">{language === 'es' ? 'Nivel Actual' : 'Current Level'}</span>
+              <span className="level-value">Elemental II</span>
+            </div>
+            <div className="progress-percentage">{totalProgress}%</div>
           </div>
-          <div className="countdown-separator">•</div>
-          <div className="countdown-item">
-            <span className="countdown-label">{t('speakingExam')}</span>
-            <span className="countdown-value">{speakingDaysLeft} {t('days')}</span>
+          
+          <div className="progress-bar-container">
+            <div className="progress-bar-fill" style={{ width: `${totalProgress}%` }}></div>
           </div>
-          <div className="countdown-separator">•</div>
-          <div className="countdown-item">
-            <span className="countdown-label">{t('overallProgress')}</span>
-            <span className="countdown-value">{totalProgress}%</span>
+          
+          <div className="progress-footer">
+            <span>🚀 {language === 'es' ? '¡Sigue así! Estás progresando.' : 'Keep it up! You are making progress.'}</span>
           </div>
+        </div>
+
+        {/* NEW AI TUTOR CARD */}
+        <div 
+            className="ai-tutor-promo-card" 
+            onClick={() => onNavigate('smart-tutor')}
+            style={{
+                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                borderRadius: '16px',
+                padding: '20px',
+                margin: '20px auto',
+                maxWidth: '600px',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.4)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                position: 'relative',
+                overflow: 'hidden'
+            }}
+        >
+            <div style={{zIndex: 2}}>
+                <h3 style={{margin: '0 0 4px 0', fontSize: '1.25rem'}}>🎙️ AI Tutor Live</h3>
+                <p style={{margin: 0, opacity: 0.9, fontSize: '0.9rem'}}>
+                    {language === 'es' ? 'Practica pronunciación y conversación real' : 'Practice real conversation & pronunciation'}
+                </p>
+            </div>
+            <div style={{ 
+                background: 'rgba(255,255,255,0.2)', 
+                width: '40px', height: '40px', 
+                borderRadius: '50%', display: 'flex', 
+                alignItems: 'center', justifyContent: 'center' 
+            }}>
+                <span style={{fontSize: '1.2rem'}}>📞</span>
+            </div>
         </div>
       </header>
 

@@ -211,3 +211,45 @@
     font-size: 1rem;
   }
 }
+
+/* Back Button Professional Styles */
+.back-button {
+  margin-bottom: var(--spacing-xl);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  transform: translateX(-4px);
+  color: var(--primary-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile UX for Back Button */
+@media (max-width: 768px) {
+  .back-button {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.08); /* More visible on mobile */
+    font-size: 1.05rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .back-button:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.12);
+  }
+}

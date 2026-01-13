@@ -12,6 +12,7 @@ import ComparativeGame from './components/ComparativeGame'
 import ProgressTracker from './components/ProgressTracker'
 import StudyGuide from './components/StudyGuide'
 import AIChatbot from './components/AIChatbot'
+import SmartTutor from './components/SmartTutor'
 
 export const LanguageContext = createContext()
 
@@ -81,6 +82,8 @@ function App() {
         return <ComparativeGame onProgress={(val) => updateProgress('comparativeGame', val)} onBack={() => setCurrentView('dashboard')} />
       case 'study-guide':
         return <StudyGuide onBack={() => setCurrentView('dashboard')} />
+      case 'smart-tutor':
+        return <SmartTutor onBack={() => setCurrentView('dashboard')} />
       default:
         return <Dashboard onNavigate={setCurrentView} progress={progress} onResetProgress={resetProgress} />
     }
@@ -89,31 +92,35 @@ function App() {
   return (
     <LanguageContext.Provider value={{ language, toggleLanguage }}>
       <div className="app">
-        <div className="language-selector">
-          <button 
-            className={`lang-btn ${language === 'en' ? 'active' : ''}`}
-            onClick={() => setLanguage('en')}
-          >
-            🇺🇸 English
-          </button>
-          <button 
-            className={`lang-btn ${language === 'es' ? 'active' : ''}`}
-            onClick={() => setLanguage('es')}
-          >
-            🇪🇸 Español
-          </button>
-        </div>
+        {currentView !== 'smart-tutor' && (
+          <>
+            <div className="language-selector">
+              <button 
+                className={`lang-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => setLanguage('en')}
+              >
+                🇺🇸 English
+              </button>
+              <button 
+                className={`lang-btn ${language === 'es' ? 'active' : ''}`}
+                onClick={() => setLanguage('es')}
+              >
+                🇪🇸 Español
+              </button>
+            </div>
 
-        <button 
-          className="theme-toggle"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
+            <button 
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+          </>
+        )}
 
         {renderView()}
-        <AIChatbot />
+        {currentView !== 'smart-tutor' && <AIChatbot />}
       </div>
     </LanguageContext.Provider>
   )

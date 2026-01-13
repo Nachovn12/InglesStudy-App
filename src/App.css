@@ -139,6 +139,37 @@
   }
 }
 
+/* =========================================
+   GLOBAL MOBILE OPTIMIZATIONS & SAFE AREAS
+   ========================================= */
+:root {
+  /* iOS Safe Areas Variables */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  
+  /* Mobile Header/Nav Heights */
+  --header-height: 60px;
+  --mobile-nav-height: 60px;
+}
+
+/* Base Mobile Resets */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none; /* Prevent bounce effect */
+  }
+
+  /* Improve touch targets globally */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+}
+
 .view-container {
   max-width: 1400px;
   margin: 0 auto;

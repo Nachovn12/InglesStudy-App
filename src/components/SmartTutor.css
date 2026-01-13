@@ -1,0 +1,212 @@
+.smart-tutor-container {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #0f172a; /* Deep clean dark */
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 5000;
+    overflow: hidden;
+}
+
+/* HEADER */
+.tutor-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+.tutor-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+
+.status-dot.listening { background: #ef4444; animation: pulseRed 1s infinite; }
+.status-dot.speaking { background: #3b82f6; animation: pulseBlue 1s infinite; }
+.status-dot.processing { background: #eab308; }
+
+.btn-icon {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+/* VISUALIZER (ORB) */
+.tutor-visualizer {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    pointer-events: none; /* Let clicks pass through */
+}
+
+.ai-orb {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s ease;
+}
+
+.orb-core {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.6);
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.ai-orb.listening .orb-core {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    box-shadow: 0 0 50px rgba(239, 68, 68, 0.6);
+}
+
+.ai-orb.speaking .orb-core {
+    transform: scale(1.2);
+    /* Breathing animation handled by keyframes if needed */
+}
+
+.orb-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    z-index: 1;
+    opacity: 0;
+}
+
+.ai-orb.listening .orb-ring {
+    animation: ripple 2s infinite cubic-bezier(0, 0, 0.2, 1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.ai-orb.speaking .orb-ring {
+    animation: ripple 1.5s infinite;
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.ring-1 { animation-delay: 0s; }
+.ring-2 { animation-delay: 0.5s; }
+
+/* TEXT DISPLAY */
+.conversation-display {
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.user-bubble p {
+    font-size: 1.1rem;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    font-style: italic;
+}
+
+.ai-bubble p {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: white;
+    line-height: 1.4;
+}
+
+/* CONTROLS */
+.tutor-controls {
+    padding: 30px;
+    padding-bottom: max(30px, env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+}
+
+.mic-button {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+    color: #0f172a;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mic-button:active {
+    transform: scale(0.95);
+}
+
+.mic-button.active {
+    background: #ef4444;
+    color: white;
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+}
+
+/* ANIMATIONS */
+@keyframes pulseRed { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+@keyframes pulseBlue { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+@keyframes ripple {
+    0% {
+        width: 120px;
+        height: 120px;
+        opacity: 0.8;
+        border-width: 4px;
+    }
+    100% {
+        width: 300px;
+        height: 300px;
+        opacity: 0;
+        border-width: 0px;
+    }
+}
