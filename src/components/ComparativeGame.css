@@ -75,6 +75,7 @@
 .item-card {
   flex: 1;
   max-width: 280px;
+  min-height: 480px; /* Ensure consistent height */
   padding: var(--spacing-xl);
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
   border: 2px solid var(--border);
@@ -85,7 +86,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: center; /* Group content in center */
+  gap: var(--spacing-xl); /* Larger gap for separation */
 }
 
 .item-card:hover {
@@ -102,9 +104,9 @@
 }
 
 .item-image-container {
-  width: 220px;
-  height: 220px;
-  margin: 0 auto var(--spacing-lg);
+  width: 240px;
+  height: 240px;
+  /* margin removed in favor of gap */
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -113,6 +115,7 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-secondary);
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .item-image {
@@ -123,12 +126,32 @@
   transition: all var(--transition-base);
 }
 
+.item-emoji {
+  font-size: 10rem;
+  line-height: 1;
+  transition: all var(--transition-base);
+  animation: float 3s ease-in-out infinite;
+}
+
 .item-card:hover .item-image {
   transform: scale(1.1);
 }
 
+.item-card:hover .item-emoji {
+  transform: scale(1.2) rotate(5deg);
+}
+
 .item-card:hover .item-image-container {
   box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .item-name {
