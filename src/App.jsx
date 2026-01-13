@@ -11,6 +11,7 @@ import WritingPractice from './components/WritingPractice'
 import ComparativeGame from './components/ComparativeGame'
 import ProgressTracker from './components/ProgressTracker'
 import StudyGuide from './components/StudyGuide'
+import AIChatbot from './components/AIChatbot'
 
 export const LanguageContext = createContext()
 
@@ -112,6 +113,7 @@ function App() {
         </button>
 
         {renderView()}
+        <AIChatbot />
       </div>
     </LanguageContext.Provider>
   )

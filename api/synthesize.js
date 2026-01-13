@@ -1,20 +1,28 @@
 import textToSpeech from '@google-cloud/text-to-speech';
 
-// Inicializar cliente usando credenciales de variable de entorno (para Vercel)
-// O usando archivo local (si fallara la env var, aunque en prod usaremos env)
-const getClient = () => {
+// Inicializar el cliente de Google TTS con las credenciales de Vercel
+// Vercel inyecta process.env.GOOGLE_CREDENTIALS con el contenido del JSON
+let client;
+
+try {
   if (process.env.GOOGLE_CREDENTIALS) {
-    // En Vercel: Leemos el JSON secreto desde una variable de entorno
+    // Caso Producción (Vercel): Usamos la variable de entorno
     const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    return new textToSpeech.TextToSpeechClient({ credentials });
+    client = new textToSpeech.TextToSpeechClient({
+      credentials: credentials
+    });
+    console.log('✅ Cliente TTS inicializado con GOOGLE_CREDENTIALS');
   } else {
-    // Fallback: Si no hay variable, intentamos inicialización estándar (buscará archivo local si existe)
-    return new textToSpeech.TextToSpeechClient();
+    // Caso Local o Fallback: Intenta buscar credenciales locales por defecto
+    // o espera que GOOGLE_APPLICATION_CREDENTIALS apunte a un archivo
+    client = new textToSpeech.TextToSpeechClient();
   }
-};
+} catch (error) {
+  console.error('❌ Error inicializando cliente TTS:', error);
+}
 
 export default async function handler(req, res) {
-  // Configurar CORS para permitir que tu app llame a esta función
+  // Configurar CORS para permitir peticiones desde tu app
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -23,7 +31,7 @@ export default async function handler(req, res) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  // Manejar preflight request de navegador
+  // Responder a OPTIONS (pre-flight check)
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -33,32 +41,34 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  if (!client) {
+    return res.status(500).json({ error: 'Configuración de credenciales fallida en el servidor.' });
+  }
+
+  const { text, gender } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: 'Falta el texto' });
+  }
+
+  const isMale = gender === 'male';
+
+  const request = {
+    input: { text: text },
+    voice: { 
+      languageCode: 'en-US', 
+      name: isMale ? 'en-US-Neural2-J' : 'en-US-Neural2-F', // Voces Neurales Premium
+      ssmlGender: isMale ? 'MALE' : 'FEMALE' 
+    },
+    audioConfig: { audioEncoding: 'MP3' },
+  };
+
   try {
-    const { text, gender } = req.body;
-
-    if (!text) {
-      return res.status(400).json({ error: 'Text is required' });
-    }
-
-    const client = getClient();
-    
-    const request = {
-      input: { text: text },
-      voice: { 
-        languageCode: 'en-US', 
-        name: gender === 'male' ? 'en-US-Neural2-J' : 'en-US-Neural2-F',
-        ssmlGender: gender === 'male' ? 'MALE' : 'FEMALE' 
-      },
-      audioConfig: { audioEncoding: 'MP3' },
-    };
-
     const [response] = await client.synthesizeSpeech(request);
-    
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.send(response.audioContent);
-
-  } catch (error) {
-    console.error('Google Cloud TTS Error:', error);
-    res.status(500).json({ error: 'Error generating speech', details: error.message });
+    res.status(200).send(response.audioContent);
+  } catch (err) {
+    console.error('ERROR en Google Cloud TTS API:', err);
+    res.status(500).json({ error: 'Error sintetizando audio: ' + err.message });
   }
 }

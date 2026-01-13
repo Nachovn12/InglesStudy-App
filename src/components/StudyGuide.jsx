@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect, useRef } from 'react'
 import { LanguageContext } from '../App'
 import { getTranslation } from '../translations'
+import { playAudio as playAudioService } from '../services/googleTTS' // ✅ Import as alias
 import './StudyGuide.css'
 
 function StudyGuide({ onBack }) {
@@ -8,108 +9,13 @@ function StudyGuide({ onBack }) {
   const t = (key) => getTranslation(language, key)
   const [activeFile, setActiveFile] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  // Audio Settings State
-  const [showAudioSettings, setShowAudioSettings] = useState(false)
-  const [voices, setVoices] = useState([])
-  const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(0)
-  const [useCloudVoice, setUseCloudVoice] = useState(true) // ✅ DEFAULT: ON (Premium Voice First)
-  const [cloudLoading, setCloudLoading] = useState(false)
   
-  // 🚀 AUDIO CACHE: Store blobs in memory to make repeated clicks INSTANT
-  const audioCache = useRef({}) 
-
-  // Initialize Voices Robustly (Browser Voices)
-  useEffect(() => {
-    // ... (rest of voice loading logic remains same) ...
-    const loadVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices()
-      if (availableVoices.length === 0) { setTimeout(loadVoices, 100); return }
-      
-      const filteredVoices = availableVoices.filter(v => {
-        const name = v.name.toLowerCase()
-        const isSabina = name.includes('sabina')
-        const isEnglish = v.lang.startsWith('en') || name.includes('english') || v.lang.indexOf('en-') !== -1
-        return (isEnglish || isSabina) && !name.includes('raul') && !name.includes('rudolph')
-      })
-      setVoices(filteredVoices)
-      
-      const sabinaIndex = filteredVoices.findIndex(v => v.name.includes('Sabina'))
-      if (sabinaIndex !== -1) setSelectedVoiceIndex(sabinaIndex)
-      else if (selectedVoiceIndex === 0 && filteredVoices.length > 0) {
-         const bestIndex = filteredVoices.findIndex(v => v.name.includes('Google US English') || v.name.includes('Natural'))
-         if (bestIndex !== -1) setSelectedVoiceIndex(bestIndex)
-      }
-    }
-    loadVoices()
-    window.speechSynthesis.onvoiceschanged = loadVoices
-    return () => { window.speechSynthesis.onvoiceschanged = null }
-  }, [])
-
-  const playAudio = async (text) => {
-    // CLOUD VOICE STRATEGY (Premium)
-    if (useCloudVoice) {
-      
-      // ⚡ CACHE CHECK: If we have it, play instantly!
-      if (audioCache.current[text]) {
-        const audio = new Audio(audioCache.current[text])
-        audio.play()
-        return
-      }
-
-      setCloudLoading(true)
-      try {
-        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? 'http://localhost:3001/api/synthesize' 
-          : '/api/synthesize';
-
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, gender: 'male' }) 
-        })
-
-        if (!response.ok) throw new Error('Cloud TTS failed')
-
-        const blob = await response.blob()
-        const audioUrl = URL.createObjectURL(blob)
-        
-        // 💾 SAVE TO CACHE
-        audioCache.current[text] = audioUrl
-
-        const audio = new Audio(audioUrl)
-        audio.play()
-      } catch (err) {
-        console.error("Cloud TTS Error:", err)
-        const isLocal = window.location.hostname === 'localhost';
-        const msg = isLocal 
-          ? "⚠️ Error Local: Asegúrate de correr 'node server.js'" 
-          : "⚠️ Error Nube: Configuración de credenciales incorrecta.";
-        
-        // Silent fallback to local voice if cloud fails
-        console.warn(msg + " Falling back to local voice.")
-        setUseCloudVoice(false) 
-        // Retry locally immediately
-        const u = new SpeechSynthesisUtterance(text)
-        u.item_lang = 'en-US'; window.speechSynthesis.speak(u)
-      } finally {
-        setCloudLoading(false)
-      }
-      return
-    }
-
-    // BROWSER VOICE STRATEGY (Fallback)
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel() 
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'en-US'
-      
-      if (voices.length > 0) {
-        utterance.voice = voices[selectedVoiceIndex]
-      }
-      
-      utterance.rate = 0.9 
-      window.speechSynthesis.speak(utterance)
-    }
+  // Cleaned up unused audio state since playAudio handles it internally
+  // But kept for UI compatibility if needed in future
+  
+  // Use centralized Premium TTS service
+  const playAudio = (text) => {
+    playAudioService(text, 'en-US')
   }
 
   // ... (Data definitions remain the same) ...
@@ -524,47 +430,7 @@ function StudyGuide({ onBack }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button 
-            className="btn-audio-settings" 
-            onClick={() => setShowAudioSettings(!showAudioSettings)}
-            title="Configurar Voz"
-          >
-            ⚙️
-          </button>
         </div>
-        {showAudioSettings && (
-          <div className="audio-settings-panel">
-            <select 
-              value={selectedVoiceIndex}
-              onChange={(e) => {
-                setSelectedVoiceIndex(parseInt(e.target.value))
-                const u = new SpeechSynthesisUtterance("Test")
-                u.voice = voices[parseInt(e.target.value)]
-                window.speechSynthesis.speak(u)
-              }}
-              className="voice-select"
-              disabled={useCloudVoice} // Disable selector if cloud is on
-              style={{ opacity: useCloudVoice ? 0.5 : 1 }}
-            >
-              {voices.map((voice, idx) => (
-                <option key={idx} value={idx}>{voice.name}</option>
-              ))}
-            </select>
-            
-            <div className="premium-voice-toggle" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'rgba(66, 133, 244, 0.1)', borderRadius: '8px', border: '1px solid rgba(66, 133, 244, 0.3)' }}>
-              <input 
-                type="checkbox" 
-                id="cloudToggle"
-                checked={useCloudVoice} 
-                onChange={() => setUseCloudVoice(!useCloudVoice)}
-                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-              />
-              <label htmlFor="cloudToggle" style={{ cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', color: '#4285f4', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                {cloudLoading ? '⏳ Conectando...' : '☁️ Usar Voz Premium (Google Neural)'}
-              </label>
-            </div>
-          </div>
-        )}
       </div>
 
       {!searchTerm && (
