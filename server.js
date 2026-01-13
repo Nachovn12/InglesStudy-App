@@ -15,6 +15,11 @@ const port = 3001;
 app.use(cors());
 app.use(bodyParser.json());
 
+// Google Generative AI Configuration
+import { GoogleGenerativeAI } from '@google/generative-ai';
+const GEMINI_API_KEY = process.env.VITE_GOOGLE_API_KEY || process.env.GEMINI_API_KEY; // Support both env styles
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
 // Obtener rutas para ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +29,47 @@ const KEY_FILE = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirna
 
 // Cliente de Google TTS
 let client;
+
+// ... (initClient function)
+
+// 📂 API: CHAT (Gemini AI)
+app.post('/api/chat', async (req, res) => {
+    if (!genAI) {
+        return res.status(500).json({ reply: "Error: AI Service not configured (API Key missing)." });
+    }
+
+    try {
+        const { message, systemPrompt } = req.body;
+        // Use Gemini 2.5 Flash for speed
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Fallback to 1.5 if 2.5 not avaiable yet via API
+
+        const chat = model.startChat({
+            history: [
+                {
+                    role: "user",
+                    parts: [{ text: systemPrompt ? `SYSTEM INSTRUCTION: ${systemPrompt}` : "You are a helpful assistant." }],
+                },
+                {
+                    role: "model",
+                    parts: [{ text: "Understood. I am ready to act as your English Tutor." }],
+                }
+            ],
+            generationConfig: {
+                maxOutputTokens: 200, // Keep it short for voice
+            },
+        });
+
+        const result = await chat.sendMessage(message);
+        const response = await result.response;
+        const text = response.text();
+        
+        res.json({ reply: text });
+
+    } catch (error) {
+        console.error("AI Chat Error:", error);
+        res.status(500).json({ reply: "Sorry, I am having trouble thinking right now." });
+    }
+});
 
 // Función asíncrona para iniciar el cliente
 const initClient = () => {

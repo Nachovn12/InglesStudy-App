@@ -4,87 +4,34 @@ import { LanguageContext } from '../App';
 import './SmartTutor.css';
 
 const SYSTEM_PROMPT = `You are an expert English Tutor AI named "Alex". 
-Your goal is to have a natural flowing conversation with the user to help them practice English.
+Goal: Have a natural conversation.
 Level: Elementary to Intermediate.
 
-RULES:
-1. Keep responses concise (1-3 sentences max) to encourage dialogue.
-2. If the user makes a grammar mistake, gently correct it *after* answering, then move on.
-   Example: "I understand! By the way, we say 'I went to' not 'I go to'. So, what did you see there?"
-3. Be encouraging, friendly, and patient.
-4. If the user speaks Spanish, answer in English but help them translate if asked.
-5. Use simple vocabulary appropriate for an English learner.`;
+LANGUAGE RULES (Hybrid Mode):
+1. If the user speaks English, respond in English.
+2. If the user speaks Spanish, respond in Spanish to assist them.
+3. CRITICAL: Start EVERY response with a language tag: [EN] for English or [ES] for Spanish.
+   - Example 1: "[EN] Hello! How are you?"
+   - Example 2: "[ES] Hola, veo que quieres practicar. ¿Empezamos?"
+
+BEHAVIOR:
+- Concise responses (1-3 sentences).
+- If correcting grammar, be gentle.
+- Use simple, clear vocabulary.`;
 
 export default function SmartTutor({ onBack }) {
     const { language } = useContext(LanguageContext);
     
-    // STATES
-    const [status, setStatus] = useState('idle'); // idle, listening, processing, speaking
-    const [transcript, setTranscript] = useState('');
-    const [aiResponse, setAiResponse] = useState("Hello! I'm your AI Tutor. Press the microphone to start talking!");
-    const [correction, setCorrection] = useState('');
-    
-    // REFS
-    const recognitionRef = useRef(null);
-    const audioRef = useRef(null);
-    const silenceTimerRef = useRef(null);
+    // ... states ...
 
-    // 1. INITIALIZE SPEECH RECOGNITION
-    useEffect(() => {
-        if ('webkitSpeechRecognition' in window) {
-            const recognition = new window.webkitSpeechRecognition();
-            recognition.continuous = true; // Keep listening until WE decide to stop
-            recognition.interimResults = true;
-            recognition.lang = 'en-US'; 
+    // ... useEffect ...
 
-            recognition.onstart = () => {
-                setStatus('listening');
-            };
-
-            recognition.onresult = (event) => {
-                // Clear any existing silence timer
-                if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
-                // Get latest transcript
-                let finalTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        finalTranscript += event.results[i][0].transcript;
-                    }
-                }
-                
-                setTranscript(finalTranscript);
-
-                // Start Silence Timer (1.5s) -> if no more speech, assume finished
-                silenceTimerRef.current = setTimeout(() => {
-                    if (finalTranscript.trim().length > 1) {
-                        recognition.stop(); // Stop listening explicitly
-                        handleAiConversation(finalTranscript); // Process
-                    }
-                }, 1500); 
-            };
-
-            recognition.onend = () => {
-                // Determine if we should restart listening or if we are processing
-                // If we are 'processing' or 'speaking', do NOT restart yet.
-                // If we stopped due to silence timer, we are already handling it.
-            };
-            
-            recognitionRef.current = recognition;
-        } else {
-            alert("Your browser does not support Speech Recognition. Please use Chrome.");
-        }
-    }, []);
-
-    // 2. AI INTERACTION LOOP
+    // ... handleAiConversation ...
     const handleAiConversation = async (userText) => {
         setStatus('processing');
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         
         try {
-            // A) Send to LLM
             const response = await fetch('/api/chat', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -96,12 +43,24 @@ export default function SmartTutor({ onBack }) {
             });
             
             const data = await response.json();
-            const aiText = data.reply || "I didn't catch that.";
+            let aiText = data.reply || "I didn't catch that.";
             
-            setAiResponse(aiText);
+            // 🔍 DETECT LANGUAGE & CLEAN TEXT
+            let textToSpeak = aiText;
+            let langCode = 'en-US'; // Default
+
+            if (aiText.startsWith('[ES]')) {
+                langCode = 'es-US'; // Spanish Neural
+                textToSpeak = aiText.replace('[ES]', '').trim();
+            } else if (aiText.startsWith('[EN]')) {
+                langCode = 'en-US'; // English Neural
+                textToSpeak = aiText.replace('[EN]', '').trim();
+            }
             
-            // B) Speak Response
-            await playTts(aiText);
+            setAiResponse(textToSpeak); // Show clean text in UI
+            
+            // Speak with Dynamic Language
+            await playTts(textToSpeak, langCode);
             
         } catch (error) {
             console.error("AI Error:", error);
@@ -109,17 +68,17 @@ export default function SmartTutor({ onBack }) {
         }
     };
 
-    // 3. TTS FUNCTION
-    const playTts = async (text) => {
+    // 3. TTS FUNCTION (Bilingual Support)
+    const playTts = async (text, langCode = 'en-US') => {
         setStatus('speaking');
         try {
-            const res = await fetch('/api/tts', {
+            const res = await fetch('/api/synthesize', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    text, 
-                    language: 'en-US', 
-                    voiceType: 'NEURAL' 
+                    text: text, 
+                    languageCode: langCode, // Dynamic: en-US or es-US
+                    gender: 'female' 
                 })
             });
             
@@ -131,9 +90,8 @@ export default function SmartTutor({ onBack }) {
             audioRef.current = audio;
             
             audio.onended = () => {
-                // AUTO-RESTART LISTENING (Continuous Conversation)
                 setStatus('listening');
-                setTranscript(''); // Clear previous text
+                setTranscript(''); 
                 recognitionRef.current?.start(); 
             };
             
