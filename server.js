@@ -205,7 +205,9 @@ app.post('/api/synthesize', async (req, res) => {
       const timepoints = response.timepoints || [];
       
       console.log(`✅ TTS Success: ${timepoints.length} timepoints generated`);
+      console.log(`📦 Audio size: ${audioBase64.length} chars (base64)`);
       
+      res.setHeader('Content-Type', 'application/json');
       res.json({
         audio: audioBase64,
         visemes: timepoints,

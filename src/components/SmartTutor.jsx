@@ -124,9 +124,25 @@ export default function SmartTutor({ onBack }) {
                 throw new Error(`TTS Failed: ${errorText}`);
             }
             
+            // Check if response is JSON
+            const contentType = res.headers.get('content-type');
+            console.log('Response Content-Type:', contentType);
+            
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Expected JSON response, got: ${contentType}`);
+            }
+            
             // Get JSON response with audio and visemes
             const data = await res.json();
-            console.log('TTS Response:', { visemeCount: data.visemes?.length });
+            console.log('TTS Response:', { 
+                visemeCount: data.visemes?.length,
+                audioLength: data.audio?.length,
+                hasAudio: !!data.audio
+            });
+            
+            if (!data.audio) {
+                throw new Error('No audio data in response');
+            }
             
             // Convert base64 audio to blob URL
             const audioBlob = new Blob(
@@ -137,7 +153,7 @@ export default function SmartTutor({ onBack }) {
             const audio = new Audio(url);
             audioRef.current = audio;
             
-            // Store visemes for avatar animation (we'll use this later)
+            // Store visemes for avatar animation
             if (data.visemes && data.visemes.length > 0) {
                 console.log('Visemes available for lip-sync:', data.visemes.length);
                 setCurrentVisemes(data.visemes);

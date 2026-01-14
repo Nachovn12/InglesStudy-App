@@ -180,98 +180,134 @@ const ProfessorAvatar = ({ status, audioElement, visemes = [], audioUrl, scale =
       }
     }
 
-    // 1. LIP SYNC - VISEME-BASED (Preciso) o AUDIO-ANALYSIS (Fallback)
+    // 1. LIP SYNC - ANÁLISIS DE FRECUENCIAS AVANZADO
     if (status === 'speaking') {
-      // MÉTODO 1: Usar visemas de Google TTS (MÁS PRECISO)
-      if (isPlaying && visemes.length > 0) {
-        const currentTime = Date.now() / 1000 - startTimeRef.current;
-        
-        // Encontrar el visema actual basado en el tiempo
-        let currentViseme = null;
-        for (let i = 0; i < visemes.length; i++) {
-          const viseme = visemes[i];
-          const nextViseme = visemes[i + 1];
+      // Sistema mejorado de análisis de audio
+      if (analyser.current && dataArray.current && audioContext.current?.state === 'running') {
+        try {
+          analyser.current.getByteFrequencyData(dataArray.current);
           
-          // timeSeconds es el tiempo en segundos del visema
-          const visemeTime = viseme.timeSeconds || 0;
-          const nextTime = nextViseme ? (nextViseme.timeSeconds || 0) : Infinity;
+          const sampleRate = audioContext.current.sampleRate;
+          const binSize = sampleRate / analyser.current.fftSize;
           
-          if (currentTime >= visemeTime && currentTime < nextTime) {
-            currentViseme = viseme;
-            break;
-          }
-        }
-        
-        // Resetear todos los blendshapes de boca
-        const mouthBlendshapes = [
-          'jawOpen', 'mouthOpen', 'mouthSmile', 'mouthFunnel', 
-          'mouthPucker', 'mouthClose', 'mouthFrown'
-        ];
-        
-        mouthBlendshapes.forEach(name => {
-          const index = dict[name];
-          if (index !== undefined) {
-            influences[index] = THREE.MathUtils.lerp(influences[index], 0, 0.3);
-          }
-        });
-        
-        // Aplicar el blendshape del visema actual
-        if (currentViseme && currentViseme.markName) {
-          // markName puede ser una letra o fonema
-          const phoneme = currentViseme.markName.toUpperCase();
-          const blendshapeName = visemeToBlendshape[phoneme];
+          // Analizar diferentes rangos de frecuencia
+          const getLevelInRange = (startHz, endHz) => {
+            const startBin = Math.floor(startHz / binSize);
+            const endBin = Math.floor(endHz / binSize);
+            let sum = 0;
+            let count = 0;
+            for (let i = startBin; i < Math.min(endBin, dataArray.current.length); i++) {
+              sum += dataArray.current[i];
+              count++;
+            }
+            return count > 0 ? sum / count / 255 : 0;
+          };
           
-          if (blendshapeName) {
-            const index = dict[blendshapeName];
+          // Rangos de frecuencia para diferentes formas de boca
+          const lowFreq = getLevelInRange(80, 250);    // Vocales graves (O, U)
+          const midFreq = getLevelInRange(250, 800);   // Vocales medias (A, E)
+          const highFreq = getLevelInRange(800, 2000); // Vocales agudas (I) y consonantes
+          const veryHighFreq = getLevelInRange(2000, 4000); // Consonantes sibilantes (S, F)
+          
+          const totalEnergy = lowFreq + midFreq + highFreq + veryHighFreq;
+          
+          // Resetear todos los blendshapes de boca
+          const mouthBlendshapes = [
+            'jawOpen', 'mouthOpen', 'mouthSmile', 'mouthFunnel', 
+            'mouthPucker', 'mouthClose', 'mouthFrown', 'mouthLeft', 'mouthRight'
+          ];
+          
+          mouthBlendshapes.forEach(name => {
+            const index = dict[name];
             if (index !== undefined) {
-              influences[index] = THREE.MathUtils.lerp(influences[index], 0.7, 0.4);
+              influences[index] = THREE.MathUtils.lerp(influences[index], 0, 0.25);
+            }
+          });
+          
+          if (totalEnergy > 0.05) {
+            // VOCAL "O" o "U" - Frecuencias bajas dominantes
+            if (lowFreq > midFreq && lowFreq > highFreq) {
+              const funnelIndex = dict['mouthFunnel'] ?? dict['mouthPucker'];
+              const jawIndex = dict['jawOpen'];
+              if (funnelIndex !== undefined) {
+                influences[funnelIndex] = THREE.MathUtils.lerp(
+                  influences[funnelIndex],
+                  Math.min(lowFreq * 1.2, 0.8),
+                  0.35
+                );
+              }
+              if (jawIndex !== undefined) {
+                influences[jawIndex] = THREE.MathUtils.lerp(
+                  influences[jawIndex],
+                  Math.min(lowFreq * 0.6, 0.4),
+                  0.3
+                );
+              }
+            }
+            // VOCAL "A" - Frecuencias medias dominantes
+            else if (midFreq > lowFreq && midFreq > highFreq) {
+              const jawIndex = dict['jawOpen'] ?? dict['mouthOpen'];
+              if (jawIndex !== undefined) {
+                influences[jawIndex] = THREE.MathUtils.lerp(
+                  influences[jawIndex],
+                  Math.min(midFreq * 1.3, 0.9),
+                  0.4
+                );
+              }
+            }
+            // VOCAL "E" o "I" - Frecuencias altas
+            else if (highFreq > lowFreq && highFreq > midFreq) {
+              const smileIndex = dict['mouthSmile'];
+              const jawIndex = dict['jawOpen'];
+              if (smileIndex !== undefined) {
+                influences[smileIndex] = THREE.MathUtils.lerp(
+                  influences[smileIndex],
+                  Math.min(highFreq * 1.1, 0.7),
+                  0.35
+                );
+              }
+              if (jawIndex !== undefined) {
+                influences[jawIndex] = THREE.MathUtils.lerp(
+                  influences[jawIndex],
+                  Math.min(highFreq * 0.5, 0.3),
+                  0.3
+                );
+              }
+            }
+            // CONSONANTES (F, S, SH) - Frecuencias muy altas
+            else if (veryHighFreq > 0.1) {
+              const frownIndex = dict['mouthFrown'] ?? dict['mouthClose'];
+              if (frownIndex !== undefined) {
+                influences[frownIndex] = THREE.MathUtils.lerp(
+                  influences[frownIndex],
+                  Math.min(veryHighFreq * 0.9, 0.6),
+                  0.4
+                );
+              }
+            }
+            
+            // Añadir movimiento general de mandíbula basado en volumen total
+            const jawIndex = dict['jawOpen'] ?? dict['mouthOpen'];
+            if (jawIndex !== undefined) {
+              const currentJaw = influences[jawIndex];
+              const targetJaw = Math.min(totalEnergy * 0.7, 0.6);
+              influences[jawIndex] = Math.max(
+                currentJaw,
+                THREE.MathUtils.lerp(currentJaw, targetJaw, 0.3)
+              );
             }
           }
+        } catch (e) {
+          console.warn('Audio analysis error:', e);
         }
       }
-      // MÉTODO 2: Análisis de audio (FALLBACK)
+      // Fallback: animación simple
       else {
-        const mouthOpenIndex = dict['jawOpen'] ?? dict['mouthOpen'];
-        
-        if (mouthOpenIndex !== undefined) {
-          let targetMouth = 0;
-
-          // Intentar usar análisis de audio real
-          if (analyser.current && dataArray.current && audioContext.current?.state === 'running') {
-            try {
-              analyser.current.getByteFrequencyData(dataArray.current);
-              
-              // Calcular volumen en frecuencias de voz (100Hz-300Hz aprox)
-              const sampleRate = audioContext.current.sampleRate;
-              const binSize = sampleRate / analyser.current.fftSize;
-              const startBin = Math.floor(100 / binSize);
-              const endBin = Math.floor(300 / binSize);
-              
-              let sum = 0;
-              let count = 0;
-              for (let i = startBin; i < Math.min(endBin, dataArray.current.length); i++) {
-                sum += dataArray.current[i];
-                count++;
-              }
-              
-              if (count > 0) {
-                const average = sum / count;
-                const normalizedVolume = average / 255;
-                targetMouth = normalizedVolume > 0.03 ? Math.min(normalizedVolume * 0.8, 0.6) : 0;
-              }
-            } catch (e) {
-              console.warn('Audio analysis error:', e);
-            }
-          }
-          
-          // Fallback: animación simple si no hay audio analysis
-          if (targetMouth === 0) {
-            targetMouth = Math.abs(Math.sin(t * 10)) * 0.4 + 0.1;
-          }
-
-          // Suavizar transición
-          influences[mouthOpenIndex] = THREE.MathUtils.lerp(
-            influences[mouthOpenIndex],
+        const jawIndex = dict['jawOpen'] ?? dict['mouthOpen'];
+        if (jawIndex !== undefined) {
+          const targetMouth = Math.abs(Math.sin(t * 10)) * 0.4 + 0.1;
+          influences[jawIndex] = THREE.MathUtils.lerp(
+            influences[jawIndex],
             targetMouth,
             0.25
           );
