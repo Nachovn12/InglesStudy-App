@@ -158,8 +158,10 @@
 @media (max-width: 768px) {
   html, body {
     overflow-x: hidden;
+    overflow-y: visible !important; /* CRÍTICO: Permitir que herramientas de captura vean todo el alto */
+    height: auto !important; /* Asegurar que la altura no se bloquee a 100% */
+    min-height: 100%;
     -webkit-tap-highlight-color: transparent;
-    overscroll-behavior-y: none; /* Prevent bounce effect */
   }
 
   /* Improve touch targets globally */

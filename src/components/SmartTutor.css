@@ -58,25 +58,32 @@ body {
     min-height: 100vh;
 }
 
-/* GLOBAL NO SCROLL */
+/* GLOBAL RESET */
+/* GLOBAL RESET */
 html, body, #root {
     width: 100%;
-    height: 100%;
-    overflow: hidden; /* IMPORTANTE: Bloquea scroll en toda la página */
+    min-height: 100%; /* CRÍTICO: Usar min-height para que el body crezca con el contenido */
     margin: 0;
     padding: 0;
+    overflow-x: hidden; /* Prevenir scroll horizontal accidental */
 }
 
-/* --- CONTENEDOR PRINCIPAL --- */
+/* --- CONTENEDOR PRINCIPAL - FULLSCREEN OVERLAY --- */
 .smart-tutor-container {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Alto exacto de la pantalla */
+  position: fixed; /* SEPARA el chat del flujo normal */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 9999; /* Siempre encima */
   background: var(--bg-primary);
   color: var(--text-primary);
-  position: relative;
-  overflow: hidden; /* Adiós barras de scroll externas */
+  overflow: hidden; /* El chat NO tiene scroll externo */
   transition: background-color 0.3s ease;
 }
 
@@ -464,15 +471,17 @@ html, body, #root {
 .chat-header-title { color: white; font-size: 1rem; font-weight: 600; }
 
 /* ÁREA MENSAJES - Compacta */
+/* ÁREA MENSAJES - Compacta y Scrollable */
 .chat-messages-area {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px; /* Menos padding interno */
+    -webkit-overflow-scrolling: touch; 
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Menos espacio entre mensajes */
+    gap: 12px;
     background: #1e293b;
 }
 
@@ -703,68 +712,74 @@ html, body, #root {
     display: none;
 }
 
-/* --- RESPONSIVE OPTIMIZADO --- */
+/* --- RESPONSIVE PROFESIONAL --- */
 
-/* Laptops pequeñas y Tablets Grandes */
+/* Tablets y Laptops Pequeñas */
 @media (max-width: 1024px) {
-    .avatar-section { flex: 0 0 55%; }
-    .chat-section { flex: 0 0 45%; }
+    .avatar-section { flex: 0 0 50%; } /* Mitad y mitad */
+    .chat-section { flex: 0 0 50%; }
 }
 
-/* Tablets y Móviles (Breakpoint clave) */
+/* Móviles (Portrait) y Tablets Pequeñas */
 @media (max-width: 900px) {
     .main-content {
-        flex-direction: column; /* Apilar Avatar y Chat */
+        flex-direction: column; /* Apilado vertical */
     }
 
     .avatar-section {
-        flex: none; /* No expandir */
-        height: 45vh; /* Altura fija para el avatar */
+        flex: none; 
+        height: 40vh; /* Reducido al 40% de la altura disponible */
         width: 100%;
         padding: 0;
+        min-height: 250px; /* Evitar que desaparezca */
     }
 
     .chat-section {
-        flex: 1; /* Ocupar todo el espacio restante */
+        flex: 1; /* El chat toma el 60% restante */
         width: 100%;
         height: auto;
-        min-height: 0; /* Permitir encogerse */
+        min-height: 0; /* Permite scroll interno */
     }
     
-    .video-card { max-width: 100%; }
+    .video-card { 
+        max-width: 100%; 
+        height: 100%;
+        border-radius: 0;
+    }
+    
+    /* Ajuste de controles en móvil para más espacio táctil */
+    .controls-dock {
+        padding: 12px 16px 20px 16px; /* Más padding abajo para la barra "home" de iOS */
+    }
 }
 
 /* Móviles Pequeños */
 @media (max-width: 480px) {
     .header-bar {
-        height: 60px;
-        padding: 10px 16px;
-    }
-    
-    .logo-area { font-size: 1rem; }
-    
-    /* El avatar se hace más pequeño para dejar espacio al teclado/chat */
-    .avatar-section {
-        height: 40vh; 
-    }
-    
-    .chat-section {
-        height: auto;
-        flex: 1;
-    }
-
-    .controls-dock {
-        padding: 12px 16px;
-        gap: 15px;
-    }
-
-    .control-btn-icon {
-        width: 48px;
-        height: 48px;
-    }
-
-    .mic-btn-large .control-btn-icon {
-        width: 56px;
         height: 56px;
+        padding: 8px 12px;
     }
+    
+    .logo-area { font-size: 0.9rem; }
+    
+    .avatar-section {
+        height: 38vh; /* Un poco menos en pantallas muy chicas */
+    }
+}
+
+/* Móviles en Landscape (Horizontal) */
+@media (max-height: 500px) and (orientation: landscape) {
+    .main-content {
+        flex-direction: row !important; /* Volver a lado-a-lado */
+    }
+    .avatar-section {
+        flex: 0 0 40%;
+        height: 100%;
+    }
+    .chat-section {
+        flex: 1;
+        height: 100%;
+    }
+    .header-bar { display: none; } /* Ocultar header para ganar espacio */
+    .main-content { padding-top: 0; }
 }
