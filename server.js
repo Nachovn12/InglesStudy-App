@@ -156,6 +156,7 @@ app.post('/api/synthesize', async (req, res) => {
                 name: selectedPersona.en
             },
             audioConfig: { audioEncoding: 'MP3' },
+            enableTimePointing: ['TIMEPOINT_TYPE_UNSPECIFIED'] // Enable visemes
           };
       } 
       // CASE 2: BILINGUAL / DEFAULT MODE (Spanish Base with English switches)
@@ -193,12 +194,23 @@ app.post('/api/synthesize', async (req, res) => {
                 name: selectedPersona.es 
             },
             audioConfig: { audioEncoding: 'MP3' },
+            enableTimePointing: ['TIMEPOINT_TYPE_UNSPECIFIED'] // Enable visemes
           };
       }
 
       const [response] = await client.synthesizeSpeech(request);
-      res.set('Content-Type', 'audio/mpeg');
-      res.send(response.audioContent);
+      
+      // Return both audio and visemes
+      const audioBase64 = response.audioContent.toString('base64');
+      const timepoints = response.timepoints || [];
+      
+      console.log(`✅ TTS Success: ${timepoints.length} timepoints generated`);
+      
+      res.json({
+        audio: audioBase64,
+        visemes: timepoints,
+        duration: response.audioContent.length
+      });
 
   } catch (err) {
     console.error('ERROR en Google Cloud TTS:', err);

@@ -39,6 +39,8 @@ export default function SmartTutor({ onBack }) {
     const [isTyping, setIsTyping] = useState(false); // Typing indicator
     const [sessionTime, setSessionTime] = useState(0); // Session timer
     const [showQuickReplies, setShowQuickReplies] = useState(true); // Quick reply buttons
+    const [currentVisemes, setCurrentVisemes] = useState([]); // Visemes for lip-sync
+    const [currentAudioUrl, setCurrentAudioUrl] = useState(null); // Audio URL for avatar
     
     // REFS
     const recognitionRef = useRef(null);
@@ -122,10 +124,25 @@ export default function SmartTutor({ onBack }) {
                 throw new Error(`TTS Failed: ${errorText}`);
             }
             
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
+            // Get JSON response with audio and visemes
+            const data = await res.json();
+            console.log('TTS Response:', { visemeCount: data.visemes?.length });
+            
+            // Convert base64 audio to blob URL
+            const audioBlob = new Blob(
+                [Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))],
+                { type: 'audio/mp3' }
+            );
+            const url = URL.createObjectURL(audioBlob);
             const audio = new Audio(url);
             audioRef.current = audio;
+            
+            // Store visemes for avatar animation (we'll use this later)
+            if (data.visemes && data.visemes.length > 0) {
+                console.log('Visemes available for lip-sync:', data.visemes.length);
+                setCurrentVisemes(data.visemes);
+                setCurrentAudioUrl(url);
+            }
             
             audio.onended = () => {
                 startListening();
@@ -430,7 +447,12 @@ export default function SmartTutor({ onBack }) {
                     {/* Video Card */}
                     <div className="video-card">
                         <div className="avatar-container-3d">
-                            <AvatarScene status={status} audioRef={audioRef} />
+                            <AvatarScene 
+                                status={status} 
+                                audioRef={audioRef} 
+                                visemes={currentVisemes}
+                                audioUrl={currentAudioUrl}
+                            />
                         </div>
                     </div>
                 </div>

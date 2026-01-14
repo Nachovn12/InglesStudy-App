@@ -7,18 +7,49 @@ import * as THREE from 'three';
 // Parámetros: morphTargets=ARKit (habilita blendshapes), textureAtlas=1024 (optimiza texturas)
 const MODEL_URL = 'https://models.readyplayer.me/69670226e0839cba1b121dfe.glb?morphTargets=ARKit&textureAtlas=1024';
 
-// Componente del Avatar con lip-sync real
-const ProfessorAvatar = ({ status, audioElement, scale = 1.7 }) => {
+// Componente del Avatar con lip-sync real basado en visemas
+const ProfessorAvatar = ({ status, audioElement, visemes = [], audioUrl, scale = 1.7 }) => {
   const group = useRef();
   const { scene } = useGLTF(MODEL_URL);
   const headMesh = useRef();
   
-  // Audio Analysis
+  // Viseme-based lip-sync
+  const [isPlaying, setIsPlaying] = useState(false);
+  const startTimeRef = useRef(0);
+  const currentVisemeIndex = useRef(0);
+  
+  // Audio Analysis (fallback)
   const audioContext = useRef(null);
   const analyser = useRef(null);
   const dataArray = useRef(null);
   const sourceNode = useRef(null);
   const isAudioSetup = useRef(false);
+
+  // Mapeo de visemas de Google TTS a blendshapes ARKit
+  // Google TTS retorna timepoints, necesitamos mapear a morfos faciales
+  const visemeToBlendshape = {
+    // Vocales
+    'A': 'jawOpen',
+    'E': 'mouthSmile',
+    'I': 'mouthSmile',
+    'O': 'mouthFunnel',
+    'U': 'mouthPucker',
+    // Consonantes
+    'M': 'mouthClose',
+    'P': 'mouthClose',
+    'B': 'mouthClose',
+    'F': 'mouthFrown',
+    'V': 'mouthFrown',
+    'TH': 'mouthOpen',
+    'S': 'mouthSmile',
+    'Z': 'mouthSmile',
+    'SH': 'mouthFunnel',
+    'CH': 'mouthFunnel',
+    'L': 'mouthOpen',
+    'R': 'mouthOpen',
+    'W': 'mouthPucker',
+    'Y': 'mouthSmile',
+  };
 
   useEffect(() => {
     // Buscar la malla de la cabeza que tiene los MorphTargets
@@ -101,6 +132,27 @@ const ProfessorAvatar = ({ status, audioElement, scale = 1.7 }) => {
     };
   }, [audioElement]);
 
+  // Efecto para sincronizar visemas con audio
+  useEffect(() => {
+    if (audioUrl && visemes.length > 0) {
+      console.log('🎭 Viseme-based lip-sync enabled:', visemes.length, 'visemes');
+      setIsPlaying(true);
+      startTimeRef.current = Date.now() / 1000;
+      currentVisemeIndex.current = 0;
+      
+      // Cuando el audio termina
+      const handleEnded = () => {
+        setIsPlaying(false);
+        currentVisemeIndex.current = 0;
+      };
+      
+      if (audioElement) {
+        audioElement.addEventListener('ended', handleEnded);
+        return () => audioElement.removeEventListener('ended', handleEnded);
+      }
+    }
+  }, [audioUrl, visemes, audioElement]);
+
   // Animación en cada frame
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
@@ -128,60 +180,116 @@ const ProfessorAvatar = ({ status, audioElement, scale = 1.7 }) => {
       }
     }
 
-    // 1. LIP SYNC
-    const mouthOpenIndex = dict['viseme_aa'] ?? dict['mouthOpen'] ?? dict['jawOpen'] ?? dict['mouthSmile'];
-    
-    if (mouthOpenIndex !== undefined) {
-      if (status === 'speaking') {
-        let targetMouth = 0;
-
-        // Intentar usar análisis de audio real
-        if (analyser.current && dataArray.current && audioContext.current?.state === 'running') {
-          try {
-            analyser.current.getByteFrequencyData(dataArray.current);
-            
-            // Calcular volumen en frecuencias de voz (100Hz-300Hz aprox)
-            const sampleRate = audioContext.current.sampleRate;
-            const binSize = sampleRate / analyser.current.fftSize;
-            const startBin = Math.floor(100 / binSize);
-            const endBin = Math.floor(300 / binSize);
-            
-            let sum = 0;
-            let count = 0;
-            for (let i = startBin; i < Math.min(endBin, dataArray.current.length); i++) {
-              sum += dataArray.current[i];
-              count++;
-            }
-            
-            if (count > 0) {
-              const average = sum / count;
-              const normalizedVolume = average / 255;
-              targetMouth = normalizedVolume > 0.03 ? Math.min(normalizedVolume * 0.8, 0.6) : 0;
-            }
-          } catch (e) {
-            console.warn('Audio analysis error:', e);
+    // 1. LIP SYNC - VISEME-BASED (Preciso) o AUDIO-ANALYSIS (Fallback)
+    if (status === 'speaking') {
+      // MÉTODO 1: Usar visemas de Google TTS (MÁS PRECISO)
+      if (isPlaying && visemes.length > 0) {
+        const currentTime = Date.now() / 1000 - startTimeRef.current;
+        
+        // Encontrar el visema actual basado en el tiempo
+        let currentViseme = null;
+        for (let i = 0; i < visemes.length; i++) {
+          const viseme = visemes[i];
+          const nextViseme = visemes[i + 1];
+          
+          // timeSeconds es el tiempo en segundos del visema
+          const visemeTime = viseme.timeSeconds || 0;
+          const nextTime = nextViseme ? (nextViseme.timeSeconds || 0) : Infinity;
+          
+          if (currentTime >= visemeTime && currentTime < nextTime) {
+            currentViseme = viseme;
+            break;
           }
         }
         
-        // Fallback: animación simple si no hay audio analysis
-        if (targetMouth === 0) {
-          targetMouth = Math.abs(Math.sin(t * 10)) * 0.4 + 0.1;
+        // Resetear todos los blendshapes de boca
+        const mouthBlendshapes = [
+          'jawOpen', 'mouthOpen', 'mouthSmile', 'mouthFunnel', 
+          'mouthPucker', 'mouthClose', 'mouthFrown'
+        ];
+        
+        mouthBlendshapes.forEach(name => {
+          const index = dict[name];
+          if (index !== undefined) {
+            influences[index] = THREE.MathUtils.lerp(influences[index], 0, 0.3);
+          }
+        });
+        
+        // Aplicar el blendshape del visema actual
+        if (currentViseme && currentViseme.markName) {
+          // markName puede ser una letra o fonema
+          const phoneme = currentViseme.markName.toUpperCase();
+          const blendshapeName = visemeToBlendshape[phoneme];
+          
+          if (blendshapeName) {
+            const index = dict[blendshapeName];
+            if (index !== undefined) {
+              influences[index] = THREE.MathUtils.lerp(influences[index], 0.7, 0.4);
+            }
+          }
         }
-
-        // Suavizar transición
-        influences[mouthOpenIndex] = THREE.MathUtils.lerp(
-          influences[mouthOpenIndex],
-          targetMouth,
-          0.25
-        );
-      } else {
-        // Cerrar boca
-        influences[mouthOpenIndex] = THREE.MathUtils.lerp(
-          influences[mouthOpenIndex],
-          0,
-          0.2
-        );
       }
+      // MÉTODO 2: Análisis de audio (FALLBACK)
+      else {
+        const mouthOpenIndex = dict['jawOpen'] ?? dict['mouthOpen'];
+        
+        if (mouthOpenIndex !== undefined) {
+          let targetMouth = 0;
+
+          // Intentar usar análisis de audio real
+          if (analyser.current && dataArray.current && audioContext.current?.state === 'running') {
+            try {
+              analyser.current.getByteFrequencyData(dataArray.current);
+              
+              // Calcular volumen en frecuencias de voz (100Hz-300Hz aprox)
+              const sampleRate = audioContext.current.sampleRate;
+              const binSize = sampleRate / analyser.current.fftSize;
+              const startBin = Math.floor(100 / binSize);
+              const endBin = Math.floor(300 / binSize);
+              
+              let sum = 0;
+              let count = 0;
+              for (let i = startBin; i < Math.min(endBin, dataArray.current.length); i++) {
+                sum += dataArray.current[i];
+                count++;
+              }
+              
+              if (count > 0) {
+                const average = sum / count;
+                const normalizedVolume = average / 255;
+                targetMouth = normalizedVolume > 0.03 ? Math.min(normalizedVolume * 0.8, 0.6) : 0;
+              }
+            } catch (e) {
+              console.warn('Audio analysis error:', e);
+            }
+          }
+          
+          // Fallback: animación simple si no hay audio analysis
+          if (targetMouth === 0) {
+            targetMouth = Math.abs(Math.sin(t * 10)) * 0.4 + 0.1;
+          }
+
+          // Suavizar transición
+          influences[mouthOpenIndex] = THREE.MathUtils.lerp(
+            influences[mouthOpenIndex],
+            targetMouth,
+            0.25
+          );
+        }
+      }
+    } else {
+      // Cerrar boca cuando no está hablando
+      const mouthBlendshapes = [
+        'jawOpen', 'mouthOpen', 'mouthSmile', 'mouthFunnel', 
+        'mouthPucker', 'mouthClose', 'mouthFrown'
+      ];
+      
+      mouthBlendshapes.forEach(name => {
+        const index = dict[name];
+        if (index !== undefined) {
+          influences[index] = THREE.MathUtils.lerp(influences[index], 0, 0.2);
+        }
+      });
     }
 
     // 2. PESTAÑEO REALISTA (con intervalos variables)
@@ -221,7 +329,7 @@ const ProfessorAvatar = ({ status, audioElement, scale = 1.7 }) => {
   );
 };
 
-const AvatarScene = ({ status, audioRef }) => {
+const AvatarScene = ({ status, audioRef, visemes = [], audioUrl }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -335,6 +443,8 @@ const AvatarScene = ({ status, audioRef }) => {
                 <ProfessorAvatar 
                   status={status} 
                   audioElement={audioRef?.current} 
+                  visemes={visemes}
+                  audioUrl={audioUrl}
                   scale={1.7}
                   onLoad={() => setIsLoading(false)}
                 />
