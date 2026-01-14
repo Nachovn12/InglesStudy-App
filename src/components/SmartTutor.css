@@ -1,33 +1,45 @@
 /* --- RESET & FONTS --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* --- CSS VARIABLES --- */
+/* --- CSS VARIABLES - MODERN PREMIUM DESIGN --- */
 :root {
-    /* Light Mode (Default) */
-    --bg-primary: #f5f5f5;
-    --bg-secondary: #ffffff;
-    --bg-card: linear-gradient(135deg, #3b5998 0%, #2d4373 100%);
-    --bg-chat: #ffffff;
-    --bg-chat-header: #f59e0b;
-    --bg-visualizer: #e8f4f8;
-    --text-primary: #374151;
-    --text-secondary: #6b7280;
-    --border-color: rgba(0,0,0,0.08);
-    --shadow-color: rgba(0,0,0,0.1);
+    /* Brand Colors - Vibrant Purple/Blue Gradient */
+    --primary: #8b5cf6;
+    --primary-dark: #7c3aed;
+    --secondary: #06b6d4;
+    --accent: #f59e0b;
+    
+    /* Light Mode */
+    --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-secondary: rgba(255, 255, 255, 0.95);
+    --bg-glass: rgba(255, 255, 255, 0.1);
+    --bg-glass-hover: rgba(255, 255, 255, 0.2);
+    --bg-chat: rgba(255, 255, 255, 0.95);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-on-primary: #ffffff;
+    --border-glass: rgba(255, 255, 255, 0.18);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+    --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
 }
 
 [data-theme="dark"] {
-    /* Dark Mode */
-    --bg-primary: #0a0e1a;
-    --bg-secondary: #151923;
-    --bg-card: linear-gradient(135deg, #1a2332 0%, #0f1419 100%);
-    --bg-chat: #1e2433;
-    --bg-chat-header: #f59e0b;
-    --bg-visualizer: #1a2332;
-    --text-primary: #e2e8f0;
+    /* Dark Mode - Deep Space Theme */
+    --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    --bg-secondary: rgba(15, 23, 42, 0.95);
+    --bg-glass: rgba(255, 255, 255, 0.05);
+    --bg-glass-hover: rgba(255, 255, 255, 0.1);
+    --bg-chat: rgba(30, 41, 59, 0.95);
+    --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
-    --border-color: rgba(226,232,240,0.08);
-    --shadow-color: rgba(0,0,0,0.4);
+    --text-on-primary: #ffffff;
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.5);
 }
 
 * { 
@@ -68,11 +80,11 @@ html, body, #root {
     overflow-x: hidden; /* Prevenir scroll horizontal accidental */
 }
 
-/* --- CONTENEDOR PRINCIPAL - FULLSCREEN OVERLAY --- */
+/* --- CONTENEDOR PRINCIPAL - MODERN GRADIENT BACKGROUND --- */
 .smart-tutor-container {
   display: flex;
   flex-direction: column;
-  position: fixed; /* SEPARA el chat del flujo normal */
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -80,32 +92,42 @@ html, body, #root {
   width: 100vw;
   height: 100vh;
   height: 100dvh;
-  z-index: 9999; /* Siempre encima */
+  z-index: 9999;
   background: var(--bg-primary);
   color: var(--text-primary);
-  overflow: hidden; /* El chat NO tiene scroll externo */
-  transition: background-color 0.3s ease;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-/* --- HEADER --- */
+/* --- HEADER - GLASSMORPHISM DESIGN --- */
 .header-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* Padding base + Notch de iOS */
   padding: max(20px, env(safe-area-inset-top)) 32px 20px 32px;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  height: auto; /* Permitir que crezca con el notch */
+  height: auto;
   min-height: 80px;
-  background: transparent;
-  pointer-events: none;
+  
+  /* Glassmorphism Effect */
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-sm);
+  
+  pointer-events: auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.header-bar > * { pointer-events: auto; }
+.header-bar:hover {
+  background: var(--bg-glass-hover);
+  box-shadow: var(--shadow-md);
+}
 
 .logo-area {
   font-size: 1.25rem;
