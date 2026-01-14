@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useContext } from 'react';
 import { Mic, MicOff, Settings, X, Volume2, Globe, Sparkles, Send, Check, Play, ArrowRight, ArrowLeft, Keyboard, Sun, Moon, MessageSquareText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import AvatarScene from './AvatarScene'; // 🟢 Import 3D Avatar
 import { LanguageContext } from '../App';
 import { useTheme } from '../hooks/useTheme';
 import './SmartTutor.css';
@@ -39,8 +38,7 @@ export default function SmartTutor({ onBack }) {
     const [isTyping, setIsTyping] = useState(false); // Typing indicator
     const [sessionTime, setSessionTime] = useState(0); // Session timer
     const [showQuickReplies, setShowQuickReplies] = useState(true); // Quick reply buttons
-    const [currentVisemes, setCurrentVisemes] = useState([]); // Visemes for lip-sync
-    const [currentAudioUrl, setCurrentAudioUrl] = useState(null); // Audio URL for avatar
+    const [currentAudioUrl, setCurrentAudioUrl] = useState(null); // Audio URL for visualization
     
     // REFS
     const recognitionRef = useRef(null);
@@ -152,13 +150,7 @@ export default function SmartTutor({ onBack }) {
             const url = URL.createObjectURL(audioBlob);
             const audio = new Audio(url);
             audioRef.current = audio;
-            
-            // Store visemes for avatar animation
-            if (data.visemes && data.visemes.length > 0) {
-                console.log('Visemes available for lip-sync:', data.visemes.length);
-                setCurrentVisemes(data.visemes);
-                setCurrentAudioUrl(url);
-            }
+            setCurrentAudioUrl(url);
             
             audio.onended = () => {
                 startListening();
@@ -457,139 +449,93 @@ export default function SmartTutor({ onBack }) {
             </header>
 
             {/* MAIN CONTENT */}
+            {/* MAIN CONTENT - CENTERED CHAT */}
             <main className="main-content">
-                {/* VIDEO SECTION (LEFT) */}
-                <div className="avatar-section">
-                    {/* Video Card */}
-                    <div className="video-card">
-                        <div className="avatar-container-3d">
-                            <AvatarScene 
-                                status={status} 
-                                audioRef={audioRef} 
-                                visemes={currentVisemes}
-                                audioUrl={currentAudioUrl}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* CHAT SECTION (RIGHT) */}
-                <div className="chat-section">
-                    {/* Chat Header */}
-                    <div className="chat-header">
-                        <MessageSquareText size={24} color="#60a5fa" />
-                        <span className="chat-header-title">Conferencia Inteligente</span>
-                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
-                            <span style={{ fontSize: '0.8rem', opacity: 0.6, background: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '12px' }}>
-                                EN-B1
-                            </span>
-                        </div>
-                    </div>
+                <div className="chat-container-centered">
                     
-                    {/* Messages Area */}
+                    {/* Audio Visualization Area (Top) */}
+                    <div className="audio-visualization-area">
+                        {status === 'speaking' ? (
+                           <div className="audio-wave">
+                             <span></span><span></span><span></span><span></span><span></span>
+                             <span></span><span></span><span></span><span></span><span></span>
+                           </div>
+                        ) : status === 'listening' ? (
+                            <div className="listening-indicator">
+                                <div className="pulse-ring"></div>
+                                <Mic size={32} />
+                            </div>
+                        ) : (
+                            <div className="teacher-avatar-circle">
+                                <span>AI</span>
+                            </div>
+                        )}
+                        <div className="status-text">
+                            {status === 'speaking' ? 'Alex hablando...' : 
+                             status === 'listening' ? 'Escuchando...' : 
+                             status === 'processing' ? 'Pensando...' : 'Alex (English Tutor)'}
+                        </div>
+                    </div>
+
+                    {/* Chat Area (Middle) */}
                     <div className="chat-messages-area" ref={chatMessagesRef}>
                         {chatHistory.length === 0 && (
-                            <>
-                                <div className="chat-bubble ai">
-                                    <p>Hello! I'm Alex. I'm excited to help you practice English today. How are you doing?</p>
-                                    <span className="message-icon">�🇧</span>
-                                </div>
-                            </>
+                            <div className="empty-state">
+                                <p>Hello! I'm Alex. Let's practice English conversation.</p>
+                                <p className="subtext">Tap the microphone to start talking.</p>
+                            </div>
                         )}
                         
                         {chatHistory.map((msg, idx) => (
                             <div key={idx} className={`chat-bubble ${msg.sender}`}>
                                 <ReactMarkdown>{msg.text}</ReactMarkdown>
-                                {msg.sender === 'ai' && <span className="message-icon">�🇧</span>}
                             </div>
                         ))}
                         
                         {status === 'processing' && (
                             <div className="chat-bubble ai processing">
-                                <span>Thinking...</span>
+                                <span>...</span>
                             </div>
                         )}
                     </div>
 
-                    {/* TEXT INPUT AREA (Solo visible en modo Tipo) */}
-                    {isTypingMode && (
-                        <div className="text-input-container" style={{ padding: '0 16px 16px', display: 'flex', gap: '10px', background: '#1e293b', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                            <input 
-                                type="text" 
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
-                                placeholder="Escribe tu respuesta aquí..."
-                                style={{
-                                    flex: 1,
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    borderRadius: '12px',
-                                    padding: '12px 16px',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    outline: 'none'
-                                }}
-                            />
+                    {/* Controls & Input (Bottom) */}
+                    <div className="controls-section">
+                        {isTypingMode && (
+                            <div className="text-input-wrapper">
+                                <input 
+                                    type="text" 
+                                    value={inputText}
+                                    onChange={(e) => setInputText(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
+                                    placeholder="Type your message..."
+                                    autoFocus
+                                />
+                                <button onClick={handleSendText}>
+                                    <Send size={20} />
+                                </button>
+                            </div>
+                        )}
+                        
+                        <div className="controls-dock-centered">
                             <button 
-                                onClick={handleSendText}
-                                style={{
-                                    background: '#3b82f6',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    width: '48px',
-                                    height: '48px',
-                                    minHeight: '48px',
-                                    padding: '12px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
+                                className={`control-btn ${isTypingMode ? 'active' : ''}`} 
+                                onClick={() => setIsTypingMode(!isTypingMode)}
                             >
-                                <Send size={20} />
+                                <Keyboard size={24} />
+                            </button>
+                            
+                            <button 
+                                className={`mic-btn-main ${status === 'listening' ? 'active' : ''}`}
+                                onClick={toggleListening}
+                            >
+                                {status === 'listening' ? <Mic size={32} /> : <MicOff size={32} />}
+                            </button>
+                            
+                            <button className="control-btn" onClick={() => setInputText("Help me say this") || setIsTypingMode(true)}>
+                                <Sparkles size={24} />
                             </button>
                         </div>
-                    )}
-                    
-                    {/* Controls Dock */}
-                    <div className="controls-dock">
-                        <button 
-                            className={`control-btn ${isTypingMode ? 'active' : ''}`}
-                            onClick={() => setIsTypingMode(!isTypingMode)}
-                        >
-                            <div className="control-btn-icon" style={isTypingMode ? { borderColor: '#3b82f6', background: 'rgba(59, 130, 246, 0.2)' } : {}}>
-                                <Keyboard size={22} />
-                            </div>
-                            <span className="control-label">Escribir</span>
-                        </button>
-                        
-                        <button 
-                            className={`control-btn mic-btn-large ${status === 'listening' ? 'listening' : ''}`}
-                            onClick={toggleListening}
-                            // Eliminado el scale(1.1) para que no sea gigante
-                        >
-                            <div className="control-btn-icon" style={{ 
-                                width: '56px',  /* Antes 64px */
-                                height: '56px', /* Antes 64px */
-                                background: status === 'listening' ? '#ef4444' : 'rgba(255,255,255,0.05)',
-                                borderColor: status === 'listening' ? '#ef4444' : 'rgba(59, 130, 246, 0.3)',
-                                color: status === 'listening' ? 'white' : '#60a5fa'
-                            }}>
-                                {status === 'listening' ? <Mic size={26} className="mic-pulse" /> : <MicOff size={26} />}
-                            </div>
-                            <span className="control-label" style={{ fontWeight: 'bold', marginTop: '5px' }}>
-                                {status === 'listening' ? 'Escuchando' : 'Hablar'}
-                            </span>
-                        </button>
-                        
-                        <button className="control-btn" onClick={() => setInputText("Could you repeat that, please?") || setIsTypingMode(true)}>
-                            <div className="control-btn-icon">
-                                <Sparkles size={22} />
-                            </div>
-                            <span className="control-label">Ayuda</span>
-                        </button>
                     </div>
                 </div>
             </main>
