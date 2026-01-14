@@ -1,50 +1,36 @@
-const CACHE_NAME = 'english-study-app-v1'
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/src/main.jsx',
-  '/src/App.jsx',
-  '/src/App.css',
-  '/src/index.css'
-]
+/* ==========================================
+   EMERGENCY SERVICE WORKER RESET
+   This replaces the old broken SW to fix fetch errors.
+   ========================================== */
 
-// Install event - cache resources
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache')
-        return cache.addAll(urlsToCache)
-      })
-  )
-})
+  self.skipWaiting(); // Force activation immediately
+  console.log('🧹 Emergency SW Installed: Taking over...');
+});
 
-// Fetch event - serve from cache when offline
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response
-        }
-        return fetch(event.request)
-      })
-  )
-})
-
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME]
   event.waitUntil(
     caches.keys().then((cacheNames) => {
+      // DELETE ALL OLD CACHES
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName)
-          }
+        cacheNames.map((cache) => {
+          console.log('🧹 Deleting old cache:', cache);
+          return caches.delete(cache);
         })
-      )
+      );
+    }).then(() => {
+      console.log('🧹 All caches cleared. Unregistering self...');
+      // Tell all clients to reload and stop using SW
+      return self.clients.claim(); 
     })
-  )
-})
+  );
+  
+  // Optional: Self-destruct logic (unregister) usually handled in main.js, 
+  // but claiming clients ensures we take control to bypass the broken one.
+});
+
+// PASS-THROUGH FETCH (Do not block/cache anything)
+self.addEventListener('fetch', (event) => {
+  // Just return the network request directly. No caching.
+  event.respondWith(fetch(event.request));
+});

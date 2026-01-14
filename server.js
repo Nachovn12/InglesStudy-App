@@ -17,59 +17,24 @@ app.use(bodyParser.json());
 
 // Google Generative AI Configuration
 import { GoogleGenerativeAI } from '@google/generative-ai';
-const GEMINI_API_KEY = process.env.VITE_GOOGLE_API_KEY || process.env.GEMINI_API_KEY; // Support both env styles
+const GEMINI_API_KEY = process.env.VITE_GOOGLE_API_KEY || process.env.GEMINI_API_KEY; 
+
+console.log("--- SERVER CONFIG ---");
+console.log(`🔑 GEMINI Key detection: ${GEMINI_API_KEY ? '✅ Found' : '❌ MISSING'} (First 4 chars: ${GEMINI_API_KEY ? GEMINI_API_KEY.substring(0,4) : 'N/A'})`);
+
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
 
 // Obtener rutas para ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Verifica si existen las credenciales
 const KEY_FILE = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirname, 'google-vision-key.json');
+console.log(`🗣️ TTS Key File path: ${KEY_FILE}`);
+console.log(`   Exists? ${fs.existsSync(KEY_FILE) ? '✅ YES' : '❌ NO'}`);
 
-// Cliente de Google TTS
+// Cliente de Google TTS (GLOBAL)
 let client;
-
-// ... (initClient function)
-
-// 📂 API: CHAT (Gemini AI)
-app.post('/api/chat', async (req, res) => {
-    if (!genAI) {
-        return res.status(500).json({ reply: "Error: AI Service not configured (API Key missing)." });
-    }
-
-    try {
-        const { message, systemPrompt } = req.body;
-        // Use Gemini 2.5 Flash for speed
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Fallback to 1.5 if 2.5 not avaiable yet via API
-
-        const chat = model.startChat({
-            history: [
-                {
-                    role: "user",
-                    parts: [{ text: systemPrompt ? `SYSTEM INSTRUCTION: ${systemPrompt}` : "You are a helpful assistant." }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "Understood. I am ready to act as your English Tutor." }],
-                }
-            ],
-            generationConfig: {
-                maxOutputTokens: 200, // Keep it short for voice
-            },
-        });
-
-        const result = await chat.sendMessage(message);
-        const response = await result.response;
-        const text = response.text();
-        
-        res.json({ reply: text });
-
-    } catch (error) {
-        console.error("AI Chat Error:", error);
-        res.status(500).json({ reply: "Sorry, I am having trouble thinking right now." });
-    }
-});
 
 // Función asíncrona para iniciar el cliente
 const initClient = () => {
@@ -87,44 +52,108 @@ const initClient = () => {
     console.error('❌ Error al inicializar el cliente TTS:', error);
   }
 }
-
 initClient();
 
+// 📂 API: CHAT
+app.post('/api/chat', async (req, res) => {
+    console.log("📩 Request to /api/chat received");
+    if (!genAI) {
+        console.error("❌ Chat failed: genAI client not initialized (missing IP key).");
+        return res.status(500).json({ reply: "Configuration Error: API Key Missing on Server." });
+    }
+
+    try {
+        const { message, systemPrompt } = req.body;
+        console.log(`💬 Processing message: "${message.substring(0, 50)}..."`);
+        
+        // UPGRADE 2026: Using Gemini 2.5 Flash for Text Chat (Fast & Intelligent)
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
+        
+        const chat = model.startChat({
+            history: [
+                {
+                    role: "user",
+                    parts: [{ text: systemPrompt + "\nRemember: Use **bold** for English phrases." }],
+                },
+                {
+                    role: "model",
+                    parts: [{ text: "Understood." }],
+                }
+            ]
+        });
+
+        const result = await chat.sendMessage(message);
+        const response = await result.response;
+        const text = response.text();
+        
+        console.log(`🤖 AI Reply generated (${text.length} chars).`);
+        res.json({ reply: text });
+
+    } catch (error) {
+        console.error("❌ AI Chat Internal Error:", error);
+        res.status(500).json({ reply: `Server Error: ${error.message}` });
+    }
+});
+
+// ... (initClient)
+
 app.post('/api/synthesize', async (req, res) => {
+  console.log("🔈 Request to /api/synthesize received");
   if (!client) {
-    return res.status(500).json({ error: 'Servidor no configurado con credenciales de Google.' });
+    console.error("❌ TTS Failed: Google Client not initialized.");
+    return res.status(500).json({ error: 'Server TTS not configured' });
   }
 
-  const text = req.body.text; // Text with markdown headers like **English**
-  const isMale = req.body.gender === 'male';
-  const languageCode = req.body.languageCode || 'es-US'; // Default to Spanish/Bilingual if not specified
+  const text = req.body.text; 
+  console.log(`📝 Synthesizing text: "${text.substring(0, 30)}..." [Lang: ${req.body.languageCode}]`);
+
+  // ... (rest of logic)
+  // VOICE PERSONAS CONFIGURATION (Google Cloud Neural2)
+  // Using DIVERSE regional variants for maximum distinction
+  const VOICE_PERSONAS = {
+      'orbit': { // Male, Bold/Energetic - Deep authoritative
+          en: 'en-US-Neural2-J', // Male, deep/authoritative
+          es: 'es-US-Neural2-B', // Male US Spanish, standard
+          esLang: 'es-US'
+      },
+      'nova': { // Female, Warm/Friendly - PREMIUM PROFESSIONAL
+          en: 'en-US-Neural2-C', // Female, professional/warm
+          es: 'es-US-Neural2-A', // Female US Spanish, natural/warm
+          esLang: 'es-US'
+      },
+      'echo': { // Male, Soft/Calm - Gentle
+          en: 'en-US-Neural2-A', // Male, soft/calm
+          es: 'es-US-Neural2-C', // Male US Spanish, calm
+          esLang: 'es-US'
+      },
+      'shimmer': { // Female, Bright/Clear - Energetic
+          en: 'en-US-Neural2-H', // Female, bright/clear
+          es: 'es-ES-Neural2-C', // Female European Spanish, bright
+          esLang: 'es-ES'
+      }
+  };
+
+  const voiceId = req.body.voiceId || 'orbit'; // Default to Orbit
+  const selectedPersona = VOICE_PERSONAS[voiceId] || VOICE_PERSONAS['orbit'];
+  
+  console.log(`🎙️ Voice Persona: ${voiceId} [En: ${selectedPersona.en}, Es: ${selectedPersona.es}]`);
+
+  const languageCode = req.body.languageCode || 'es-US'; 
 
   if (!text) {
     return res.status(400).send('Falta el texto');
   }
-
-  // VOICES CONFIGURATION (Neural2 Enterprise Tier)
-  const voices = {
-      en: { m: 'en-US-Neural2-J', f: 'en-US-Neural2-F' },
-      es: { m: 'es-US-Neural2-B', f: 'es-US-Neural2-C' }
-  };
-
-  const selectedVoices = {
-      en: isMale ? voices.en.m : voices.en.f,
-      es: isMale ? voices.es.m : voices.es.f
-  };
 
   try {
       let request;
       
       // CASE 1: ENGLISH ONLY REQUEST
       if (languageCode === 'en-US') {
-          // Force English Neural Voice for the entire text
           request = {
-            input: { text: text }, // No need for intricate SSML if full English
+            input: { text: text }, 
             voice: { 
                 languageCode: 'en-US', 
-                name: selectedVoices.en
+                name: selectedPersona.en
             },
             audioConfig: { audioEncoding: 'MP3' },
           };
@@ -144,13 +173,13 @@ app.post('/api/synthesize', async (req, res) => {
                   // English Content
                   const content = segment.replace(/\*\*/g, '').trim();
                   if (content) {
-                      ssml += `<voice name="${selectedVoices.en}" languageCode="en-US"><prosody rate="0.9">${content}</prosody></voice> `;
+                      ssml += `<voice name="${selectedPersona.en}" languageCode="en-US"><prosody rate="0.9">${content}</prosody></voice> `;
                   }
               } else {
                   // Spanish Content
                   const content = segment.trim();
                   if (content) {
-                       ssml += `<voice name="${selectedVoices.es}" languageCode="es-US">${content}</voice> `;
+                       ssml += `<voice name="${selectedPersona.es}" languageCode="${selectedPersona.esLang}">${content}</voice> `;
                   }
               }
           });
@@ -160,8 +189,8 @@ app.post('/api/synthesize', async (req, res) => {
             input: { ssml: ssml },
             // Base voice must be Spanish Neural2 to support switching
             voice: { 
-                languageCode: 'es-US', 
-                name: selectedVoices.es 
+                languageCode: selectedPersona.esLang, 
+                name: selectedPersona.es 
             },
             audioConfig: { audioEncoding: 'MP3' },
           };
