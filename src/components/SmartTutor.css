@@ -713,6 +713,20 @@ html, body, #root {
     display: none;
 }
 
+/* TEXT INPUT CONTAINER */
+.text-input-container {
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+@media (max-width: 900px) {
+    .text-input-container {
+        padding: 12px 16px 16px !important;
+        position: sticky;
+        bottom: 0;
+    }
+}
+
 /* --- RESPONSIVE PROFESIONAL --- */
 
 /* Tablets y Laptops Pequeñas */
@@ -730,28 +744,27 @@ html, body, #root {
     }
 
     .header-bar {
-        position: relative; /* FIX: Dejar de flotar para empujar el contenido */
+        position: relative;
         height: auto;
-        min-height: 60px;
-         /* Notch + espacio visual */
-        padding-top: max(12px, env(safe-area-inset-top));
-        padding-bottom: 12px;
-        padding-left: 16px;
-        padding-right: 16px;
+        min-height: 56px; /* Más compacto */
+        padding-top: max(8px, env(safe-area-inset-top)); /* Menos padding */
+        padding-bottom: 8px;
+        padding-left: 12px;
+        padding-right: 12px;
         background: var(--bg-primary); 
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        pointer-events: auto; /* Asegurar interactividad */
+        pointer-events: auto;
     }
 
     .session-time { display: none; } /* Ocultar para ganar espacio */
 
     .avatar-section {
         flex: none; 
-        height: 40vh; 
+        height: 35vh; /* Reducido para dar más espacio al chat */
         width: 100%;
         padding: 0;
-        background: #000; /* Cine look */
-        min-height: 250px; 
+        background: #000;
+        min-height: 200px; /* Reducido también */
     }
     
     .avatar-section::after { display: none; } /* Quitar marco decorativo en móvil */
@@ -776,8 +789,8 @@ html, body, #root {
     }
     
     .controls-dock {
-        padding: 12px 16px 24px 16px; 
-        background: #0f172a; /* Fondo OPACIDAD TOTAL */
+        padding: 12px 16px max(32px, calc(env(safe-area-inset-bottom) + 12px)) 16px; 
+        background: #0f172a;
     }
 }
 

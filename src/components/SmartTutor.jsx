@@ -475,7 +475,7 @@ export default function SmartTutor({ onBack }) {
 
                     {/* TEXT INPUT AREA (Solo visible en modo Tipo) */}
                     {isTypingMode && (
-                        <div style={{ padding: '0 24px 20px', display: 'flex', gap: '10px' }}>
+                        <div className="text-input-container" style={{ padding: '0 16px 16px', display: 'flex', gap: '10px', background: '#1e293b', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                             <input 
                                 type="text" 
                                 value={inputText}
