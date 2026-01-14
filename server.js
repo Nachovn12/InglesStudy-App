@@ -54,11 +54,13 @@ const initClient = () => {
 }
 initClient();
 
-// 📂 API: CHAT
+// 📂 API: CHAT - Using Gemini API 2.5 Flash Lite
 app.post('/api/chat', async (req, res) => {
     console.log("📩 Request to /api/chat received");
-    if (!genAI) {
-        console.error("❌ Chat failed: genAI client not initialized (missing IP key).");
+    
+    const API_KEY = process.env.VITE_GOOGLE_API_KEY;
+    if (!API_KEY) {
+        console.error("❌ Chat failed: API Key missing.");
         return res.status(500).json({ reply: "Configuration Error: API Key Missing on Server." });
     }
 
@@ -66,28 +68,66 @@ app.post('/api/chat', async (req, res) => {
         const { message, systemPrompt } = req.body;
         console.log(`💬 Processing message: "${message.substring(0, 50)}..."`);
         
-        // UPGRADE 2026: Using Gemini 2.5 Flash for Text Chat (Fast & Intelligent)
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
+        // Gemini API endpoint (NOT Vertex AI)
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`;
         
-        const chat = model.startChat({
-            history: [
+        // Prepare request body
+        const requestBody = {
+            contents: [
                 {
                     role: "user",
-                    parts: [{ text: systemPrompt + "\nRemember: Use **bold** for English phrases." }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "Understood." }],
+                    parts: [
+                        {
+                            text: systemPrompt + "\n\nRemember: Use **bold** for English phrases.\n\nUser: " + message
+                        }
+                    ]
                 }
-            ]
-        });
-
-        const result = await chat.sendMessage(message);
-        const response = await result.response;
-        const text = response.text();
+            ],
+            generationConfig: {
+                temperature: 0.7,
+                topP: 0.95,
+                topK: 40,
+                maxOutputTokens: 1024,
+            }
+        };
         
-        console.log(`🤖 AI Reply generated (${text.length} chars).`);
-        res.json({ reply: text });
+        console.log('🚀 Calling Gemini API 2.0 Flash...');
+        
+        // Make request to Gemini API
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Gemini API Error:', errorText);
+            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
+        }
+        
+        // Parse response
+        const data = await response.json();
+        
+        // Extract text from response
+        let fullText = '';
+        if (data.candidates && data.candidates[0]?.content?.parts) {
+            const parts = data.candidates[0].content.parts;
+            for (const part of parts) {
+                if (part.text) {
+                    fullText += part.text;
+                }
+            }
+        }
+        
+        if (!fullText) {
+            throw new Error('No response text generated');
+        }
+        
+        console.log(`🤖 AI Reply generated (${fullText.length} chars) via Gemini API`);
+        res.json({ reply: fullText });
 
     } catch (error) {
         console.error("❌ AI Chat Internal Error:", error);
