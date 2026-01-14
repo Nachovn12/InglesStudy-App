@@ -196,7 +196,7 @@ app.post('/api/synthesize', async (req, res) => {
                 name: selectedPersona.en
             },
             audioConfig: { audioEncoding: 'MP3' },
-            enableTimePointing: ['TIMEPOINT_TYPE_UNSPECIFIED'] // Enable visemes
+            enableTimePointing: ['TIMEPOINT_TYPE_UNSPECIFIED', 'SSML_MARK'] // Request all types
           };
       } 
       // CASE 2: BILINGUAL / DEFAULT MODE (Spanish Base with English switches)
@@ -234,7 +234,7 @@ app.post('/api/synthesize', async (req, res) => {
                 name: selectedPersona.es 
             },
             audioConfig: { audioEncoding: 'MP3' },
-            enableTimePointing: ['TIMEPOINT_TYPE_UNSPECIFIED'] // Enable visemes
+            enableTimePointing: ['TIMEPOINT_TYPE_UNSPECIFIED', 'SSML_MARK'] // Request all types
           };
       }
 
