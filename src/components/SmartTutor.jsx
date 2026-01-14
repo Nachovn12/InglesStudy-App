@@ -146,6 +146,7 @@ export default function SmartTutor({ onBack }) {
 
     // AI INTERACTION
     const handleAiConversation = async (userText) => {
+        console.log('handleAiConversation called with:', userText);
         if (!userText || userText.trim().length < 1) return;
 
         updateStatus('processing');
@@ -154,6 +155,7 @@ export default function SmartTutor({ onBack }) {
         setChatHistory(prev => [...prev, { sender: 'user', text: userText }]);
         
         try {
+            console.log('Sending request to /api/chat...');
             const response = await fetch('/api/chat', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -164,7 +166,10 @@ export default function SmartTutor({ onBack }) {
                 })
             });
             
+            console.log('Response status:', response.status);
             const data = await response.json();
+            console.log('Response data:', data);
+            
             if (!response.ok) throw new Error(data.reply || "Server Error");
 
             let aiText = data.reply || "I didn't catch that.";
@@ -175,7 +180,9 @@ export default function SmartTutor({ onBack }) {
             
         } catch (error) {
             console.error("AI Error:", error);
+            console.error("Error details:", error.message, error.stack);
             setErrorMsg(`AI Error: ${error.message}`);
+            setChatHistory(prev => [...prev, { sender: 'ai', text: `Error: ${error.message}` }]);
             updateStatus('idle');
         }
     };
@@ -183,9 +190,16 @@ export default function SmartTutor({ onBack }) {
 
     // TEXT SUBMIT
     const handleSendText = () => {
+        console.log('handleSendText called with:', inputText);
         if (!inputText.trim()) return;
         handleAiConversation(inputText);
         setInputText('');
+        // Scroll to bottom after sending
+        setTimeout(() => {
+            if (chatMessagesRef.current) {
+                chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+            }
+        }, 100);
     };
 
     // LISTENING
@@ -492,6 +506,9 @@ export default function SmartTutor({ onBack }) {
                                     border: 'none',
                                     borderRadius: '12px',
                                     width: '48px',
+                                    height: '48px',
+                                    minHeight: '48px',
+                                    padding: '12px',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
